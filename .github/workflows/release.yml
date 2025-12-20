@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionType:
+        type: choice
+        description: "Type de version"
+        required: true
+        default: "patch"
+        options:
+          - major
+          - minor
+          - patch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛎️ Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # important pour récupérer les tags
+
+      - name: ☕ Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: 🔍 Déterminer la version actuelle
+        id: version
+        run: |
+          CURRENT=$(git describe --tags --abbrev=0 || echo "0.1.0")
+          echo "Version actuelle: $CURRENT"
+
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          case "${{ github.event.inputs.versionType }}" in
+            major)
+              NEW="$((MAJOR+1)).0.0"
+              ;;
+            minor)
+              NEW="$MAJOR.$((MINOR+1)).0"
+              ;;
+            patch)
+              NEW="$MAJOR.$MINOR.$((PATCH+1))"
+              ;;
+          esac
+
+          echo "Nouvelle version: $NEW"
+          echo "new_version=$NEW" >> $GITHUB_OUTPUT
+
+      - name: 🏗️ Build JAR
+        run: mvn -B clean package -DskipTests
+
+      - name: 📦 Upload JAR
+        uses: actions/upload-artifact@v5
+        with:
+          name: app-${{ steps.version.outputs.new_version }}
+          path: target/*.jar
+
+      - name: 🏷️ Créer le tag
+        run: |
+          git tag ${{ steps.version.outputs.new_version }}
+          git push origin ${{ steps.version.outputs.new_version }}
+
+      - name: 🚀 Créer la GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.new_version }}
+          name: "Release ${{ steps.version.outputs.new_version }}"
+          files: target/*.jar

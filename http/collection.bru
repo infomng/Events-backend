@@ -1,0 +1,41 @@
+
+meta {
+ name: EVENTS_APPLICATION
+}
+
+auth {
+ mode: bearer
+}
+
+auth:bearer {
+ token: {{access_token_set_by_collection_script}}
+}
+
+script:pre-request {
+ const axios = require("axios");
+
+ if(bru.getEnvVar("is_cli") !== "true") {
+   return;
+ }
+
+ if(!bru.getVar('access_token_set_by_collection_script')){
+   // TODO: runRequest is not yet available in the CLI (see: https://github.com/usebruno/bruno/issues/1350)
+   /*
+   const requestResponse = await bru.runRequest('Login.bru');
+   if(requestResponse.body.value.access_token) {
+     bru.setVar('access_token_set_by_collection_script', requestResponse.body.value.access_token);
+   }*/
+
+   const url = `${bru.getEnvVar("host")}/api/v1/auth/login`;
+   const requestResponse = await axios.post(url, {}, {
+     auth: {
+       username: bru.getEnvVar("username"),
+       password: bru.getEnvVar("password")
+     }
+   });
+
+   if(requestResponse.data.value.access_token) {
+       bru.setVar('access_token_set_by_collection_script', requestResponse.data.value.access_token);
+   }
+ }
+}

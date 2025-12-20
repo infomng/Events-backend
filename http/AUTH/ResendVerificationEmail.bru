@@ -1,0 +1,15 @@
+meta {
+  name: ResendVerificationEmail
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/auth/resend-verification-email?email=infomng2022@gmail.com
+  body: none
+  auth: none
+}
+
+params:query {
+  email: infomng2022@gmail.com
+}

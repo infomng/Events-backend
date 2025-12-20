@@ -1,0 +1,20 @@
+meta {
+  name: RefreshToken
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{host}}/auth/refresh-token
+  body: none
+  auth: none
+}
+
+headers {
+  refreshToken: aaa
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

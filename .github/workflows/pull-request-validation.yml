@@ -1,0 +1,123 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    branches: ["develop","main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # 1. Checkout du code
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      # 2. Setup Java
+      - name: Setup JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      # 3. Cache Maven
+      - name: Cache Maven packages
+        uses: actions/cache@v5
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # 4. Build + test avec logs propres
+      - name: Build and test (clean mode)
+        run: |
+          echo "::group::🔧 Maven Build & Test"
+          mvn -q -DtrimStackTrace=true -DskipTests=false clean verify
+          echo "::endgroup::"
+
+      # 5. Extraire automatiquement les erreurs Maven si échec
+      - name: Extract Maven errors
+        if: failure()
+        run: |
+          echo "::group::❌ Maven Errors"
+          grep -R "ERROR" -n target/surefire-reports || true
+          echo "::endgroup::"
+
+      # 6. Annoter les erreurs dans l’UI GitHub (super propre)
+      - name: Annotate test failures
+        if: failure()
+        run: |
+          for file in $(find target/surefire-reports -name "*.txt"); do
+            while IFS= read -r line; do
+              echo "::error file=$file::$line"
+            done < "$file"
+          done
+
+      # 7. Générer un rapport HTML propre si ça échoue
+      - name: Generate Surefire Report (HTML)
+        if: failure()
+        run: |
+          echo "::group::📄 Generating HTML Test Report"
+          mvn -q surefire-report:report
+          echo "::endgroup::"
+
+      # 8. Uploader le rapport (téléchargeable depuis GitHub)
+      - name: Upload test report
+        uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: test-report
+          path: target/site/surefire-report.html
+
+      # 9. Uploader le JAR (utile même en échec partiel)
+      - name: Upload generated JAR
+        uses: actions/upload-artifact@v6
+        with:
+          name: app-jar
+          path: target/*.jar
+
+#name: Spring Boot CI
+#
+#on:
+#  push:
+#    branches: [ "develop" ]
+#  pull_request:
+#    branches: [ "develop" ]
+#
+#jobs:
+#  build:
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      # 1. Checkout du code
+#      - name: Checkout repository
+#        uses: actions/checkout@v3
+#
+#      # 2. Setup JDK
+#      - name: Setup JDK 21
+#        uses: actions/setup-java@v3
+#        with:
+#          distribution: 'temurin'
+#          java-version: '21'
+#
+#      # 3. Cache Maven (accélère les builds)
+#      - name: Cache Maven packages
+#        uses: actions/cache@v3
+#        with:
+#          path: ~/.m2
+#          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+#          restore-keys: |
+#            ${{ runner.os }}-maven-
+#
+#      # 4. Build + tests
+#      - name: Build with Maven
+#        run: mvn -B clean verify
+#
+#      # 5. Archive le jar généré (optionnel mais utile)
+#      - name: Upload JAR artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: spring-boot-app
+#          path: target/*.jar

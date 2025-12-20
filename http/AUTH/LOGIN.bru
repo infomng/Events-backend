@@ -1,0 +1,22 @@
+meta {
+  name: LOGIN
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/auth/login
+  body: none
+  auth: basic
+}
+
+auth:basic {
+  username: {{email}}
+  password: {{password}}
+}
+
+script:post-response {
+  if(res.body.value.access_token) {
+    bru.setVar('access_token_set_by_collection_script', res.body.value.access_token);
+     }
+}
