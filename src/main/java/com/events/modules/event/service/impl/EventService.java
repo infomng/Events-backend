@@ -35,7 +35,15 @@ public class EventService implements IEventService {
 
         User currentUser = authService.getCurrentUser();
 
-        Event event = Event.builder()
+        Event event = buildEvent(command, currentUser);
+
+        eventRepository.save(event);
+
+        return event.getId();
+    }
+
+    private static Event buildEvent(CreateEventCommandDto command, User currentUser) {
+        return Event.builder()
                 .name(command.name())
                 .description(command.description())
                 .location(command.location())
@@ -47,6 +55,8 @@ public class EventService implements IEventService {
                 .organizer(currentUser)
                 .totalTickets(command.totalTickets())
                 .availableTickets(command.totalTickets())
+                .hasSits(command.hasSeats())
+                .availableTickets(command.totalTickets())
                 .isFree(command.isFree())
                 .status(EventStatusEnum.DRAFT)
                 .isPublic(command.isPublic())
@@ -54,10 +64,6 @@ public class EventService implements IEventService {
                 .longitude(command.longitude())
                 .isFreeEntry(command.isFree() && command.isFreeEntry())
                 .build();
-
-        eventRepository.save(event);
-
-        return event.getId();
     }
 
     @Override
