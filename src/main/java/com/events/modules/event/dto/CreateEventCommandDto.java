@@ -28,9 +28,8 @@ public record CreateEventCommandDto(@NotNull String name,
                                     Boolean hasSeats,
                                     List<UUID> staffMembers,
                                     @NotEmpty(message = "At least one price category is required")
-                                    List< @Valid PriceCategoryDto> priceCategories,
+                                    List< @Valid CreatePriceCategoryDto> priceCategories,
                                     @NotNull(message = "Category ID is required")
                                     UUID categoryId,
                                     @NotNull(message = "Country ID is required")
-                                    UUID countryId
-) { }
+                                    UUID countryId) { }
