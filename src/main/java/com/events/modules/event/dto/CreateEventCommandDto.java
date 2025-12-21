@@ -19,7 +19,8 @@ public record CreateEventCommandDto(@NotNull String name,
                                     Double longitude,
                                     LocalDateTime ticketSalesStartDate,
                                     LocalDateTime ticketSalesEndDate,
-                                    Double ticketPrice) {
+                                    Double ticketPrice,
+                                    Boolean hasSeats) {
 
     public CreateEventCommandDto {
 
@@ -41,6 +42,4 @@ public record CreateEventCommandDto(@NotNull String name,
             throw new BadRequestException(Constants.PRICE_MUST_BE_NULL_FOR_FREE_EVENT);
         }
     }
-
-
 }

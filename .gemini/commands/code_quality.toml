@@ -1,0 +1,1 @@
+prompt = "verify the code quality of the following issue: {{args}}"
