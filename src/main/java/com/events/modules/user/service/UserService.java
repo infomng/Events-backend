@@ -44,4 +44,9 @@ public class UserService implements IUserService {
     public boolean existsByEmail(String email) {
         return userRepository.existByEmail(email);
     }
+
+    @Override
+    public User findById(java.util.UUID userId) {
+        return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
+    }
 }
