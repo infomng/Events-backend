@@ -1,6 +1,7 @@
-package com.events.modules.event.entity;
+package com.events.modules.booking.entity;
 
 import com.events.common.abstraction.AuditableEntity;
+import com.events.modules.event.entity.aggregate.BookingSeat;
 import com.events.modules.event.enumeration.BookingStatusEnum;
 import com.events.modules.event.enumeration.PaymentStatusEnum;
 import jakarta.persistence.*;
@@ -13,6 +14,7 @@ import lombok.experimental.SuperBuilder;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.UUID;
 
 
 @Entity
@@ -30,10 +32,10 @@ import java.util.Set;
 public class Booking extends AuditableEntity {
 
     @Column(nullable = false)
-    private Long eventId;
+    private UUID eventId;
 
-    @Column(nullable = false, length = 50)
-    private String userId;
+    @Column(nullable = false)
+    private UUID userId;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;

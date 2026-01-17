@@ -1,6 +1,8 @@
-package com.events.modules.event.entity;
+package com.events.modules.event.entity.aggregate;
 
 import com.events.common.abstraction.AuditableEntity;
+import com.events.modules.booking.entity.Booking;
+import com.events.modules.event.entity.Event;
 import com.events.modules.event.enumeration.SeatStatusEnum;
 import com.events.modules.event.enumeration.SeatTypeEnum;
 import jakarta.persistence.Entity;
