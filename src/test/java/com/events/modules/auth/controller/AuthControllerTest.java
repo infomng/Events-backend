@@ -1,30 +1,22 @@
 package com.events.modules.auth.controller;
 
+import com.events.TestContexts.controllers.ControllerTestContext;
 import com.events.common.config.properties.JwtProperties;
 import com.events.common.utils.contants.Constants;
 import com.events.common.utils.string.StringUtils;
 import com.events.modules.auth.dto.*;
 import com.events.modules.auth.refreshtoken.dto.RefreshTokenResponseDto;
-import com.events.modules.auth.refreshtoken.service.IRefreshTokenService;
-import com.events.modules.auth.service.auth.IAuthService;
-import com.events.modules.auth.service.jwt.impl.JwtService;
-import com.events.modules.user.dto.GetUserDto;
+import com.events.utils.TestUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.HttpHeaders;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.web.authentication.AuthenticationConverter;
-import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.*;
@@ -36,31 +28,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class AuthControllerTest {
+class AuthControllerTest extends ControllerTestContext {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
-    private IAuthService authService;
-
-    @MockBean
-    private IRefreshTokenService refreshTokenService;
-
-    @MockBean
-    private JwtProperties jwtProperties;
-
-    @MockBean
-    private JwtService jwtService;
-
-    @MockBean
-    private UserDetailsService userDetailsService;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
-    private AuthenticationConverter authenticationConverter;
 
     @Value("${app.api-version}")
     private String apiVersion;
@@ -188,17 +157,10 @@ class AuthControllerTest {
 
     @Test
     void profile() throws Exception {
-        when(authService.getCurrentUserDto()).thenReturn(getUserDto());
+        when(authService.getCurrentUserDto()).thenReturn(TestUtils.getUserDto());
 
         mockMvc.perform(get(authApiUrl + "/profile")
 )                .andExpect(status().isOk());
-    }
-
-    private static GetUserDto getUserDto() {
-        return GetUserDto.builder()
-                .fullName(Constants.JOHN_DOE)
-                .email(Constants.JOHN_DOE_EMAIL)
-                .build();
     }
 
     private static RegisterCommandDto getRegisterCommand() {
