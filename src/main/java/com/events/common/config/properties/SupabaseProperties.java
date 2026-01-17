@@ -11,5 +11,7 @@ public record SupabaseProperties(
         @NotBlank String projectUrl,
         @NotBlank String apiKey,
         @NotBlank String serviceRoleKey,
-        @NotBlank String bucketName
+        @NotBlank String bucketName,
+        @NotBlank String storageObject,
+        @NotBlank String storageObjectPublic
 ) {}
