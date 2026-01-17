@@ -1,4 +1,4 @@
-package com.events.modules.auth.config.ratelimit.annotation;
+package com.events.common.config.ratelimit.annotation;
 
 import com.events.modules.auth.exception.TooManyRequestException;
 import io.github.bucket4j.Bandwidth;
