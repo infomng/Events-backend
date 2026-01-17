@@ -6,9 +6,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface IEventRepository extends JpaRepository<Event, Long> {
+public interface IEventRepository extends JpaRepository<Event, UUID> {
     @Query("SELECT e FROM Event e WHERE " +
             "FUNCTION('earth_distance', ll_to_earth(e.latitude, e.longitude), ll_to_earth(?1, ?2)) <= ?3")
     List<Event> findByLocationNear(Double latitude, Double longitude, Double radiusInMeters);

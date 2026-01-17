@@ -15,6 +15,13 @@ public final class Constants {
     public static final String PRICE_MUST_BE_NULL_FOR_FREE_EVENT = "Ticket price must be null for free events";
     public static final String HTTP_ONLY = "HttpOnly";
     public static final String HEADER = "header";
+    public static final String STATUS = "Status";
+    public static final String IS_PUBLIC = "isPublic";
+    public static final String IS_FREE_ENTRY = "isFreeEntry";
+    public static final String HAS_INVITATION_CODE = "hasInvitationCode";
+    public static final String START_DATE = "startDate";
+    public static final String END_DATE = "startDate";
+
 
     private Constants() {}
 
@@ -26,7 +33,7 @@ public final class Constants {
     public static final String ROLE = "role";
     public static final String AUTHORIZATION = "Authorization";
     public static final String TIMESTAMP = "timestamp";
-    public static final String BEARER = "Bearer";
+    public static final String BEARER = "Bearer ";
     public static final String FAILED_TO_SEND_EMAIL = "Failed to send email: {}";
     public static final String EMAIL_VERIFICATION = "Email Verification";
     public static final String PLEASE_CHECK_YOUR_INBOX = ". Please check your inbox.";

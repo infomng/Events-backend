@@ -1,0 +1,11 @@
+profiles:
+  project-dev:
+    permissions:
+      shell:
+        allow:
+          - mkdir
+          - touch
+          - rm
+          - git
+          - mv
+        ask: false
