@@ -1,0 +1,19 @@
+meta {
+  name: GetTicketById
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{host}}/api/v1/tickets/
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+vars:pre-request {
+  ticketId: 
+}

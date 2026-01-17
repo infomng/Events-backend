@@ -212,15 +212,30 @@ public class EventService implements IEventService {
     public void softDeleteEvent(UUID eventId) {
         User currentUser = authService.getCurrentUser();
 
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EventNotFoundException(eventId));
-
-        if (!event.getOrganizer().getId().equals(currentUser.getId())) {
-            throw new EventForbidenException(event.getId());
-        }
+        Event event = eventRepository.findByIdAndOrganizerId(eventId, currentUser.getId())
+                .orElseThrow(() -> new EventForbidenException(eventId));
 
         event.setIsActive(false);
         eventRepository.save(event);
+    }
+
+    @Override
+    public void cancelEvent(UUID eventId) {
+        User currentUser = authService.getCurrentUser();
+
+        Event event = eventRepository.findByIdAndOrganizerId(eventId, currentUser.getId())
+                .orElseThrow(() -> new BadRequestException("Event not found"));
+
+        if (event.getStatus() != EventStatusEnum.PUBLISHED) {
+            throw new BadRequestException("Event cannot be cancelled as it is not in PUBLISHED state.");
+        }
+
+        event.setStatus(EventStatusEnum.CANCELLED);
+        eventRepository.save(event);
+
+        // TODO: Notify all participants about the event cancellation
+
+        // TODO: Trigger refunds for all sold tickets
     }
 }
 

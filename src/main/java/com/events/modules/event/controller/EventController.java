@@ -80,4 +80,10 @@ public class EventController {
         eventService.softDeleteEvent(eventId);
         return ResponseEntity.ok(Result.success());
     }
+
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<Result<Void>> cancelEvent(@PathVariable UUID id) {
+        eventService.cancelEvent(id);
+        return ResponseEntity.ok(Result.success());
+    }
 }

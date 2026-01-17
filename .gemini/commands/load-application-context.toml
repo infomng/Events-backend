@@ -11,9 +11,12 @@ You must:
 - Strictly follow the architecture and constraints defined
 - Avoid proposing solutions that contradict this context
 - Ask for clarification only if something is ambiguous
+- The GEMINI.md file is present in .gemini directory
 
 @{GEMINI.md}
 
 - After you finish reading the GEMINI.md file, scann the whole codebase to have a better understanding of the project and
  ensure there are no contradictions with the application context. And if needed, you can complete the GEMINI.md file.
+
+ - One you finish, respond with "Application context loaded successfully!"
 """

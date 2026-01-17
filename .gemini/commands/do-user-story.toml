@@ -11,7 +11,7 @@ You must:
 - Strictly follow the architecture and constraints defined
 - Avoid proposing solutions that contradict this context
 - Ask for clarification only if something is ambiguous
-- all user stories are named as follows: User Story: EVENTS-<number>
+- all user stories are named as follows: User Story: EVENTS-<number> present int the .gemini/user-stories/ directory
 - here is the user story requirements to implement: {{args}}.
 - After completing the user story, provide a concise summary of the changes made and any relevant details for future referenc in the us-report/EVENTS-<number>.md file.
 """

@@ -1,0 +1,43 @@
+meta {
+  name: CreateEvent
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{host}}/events
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Concert d'été",
+    "description": "Un grand concert en plein air avec plusieurs artistes.",
+    "isPublic": true,
+    "isFreeEntry": false,
+    "hasInvitationCode": true,
+    "isInvitationCodeUnique": "true",
+    "location": "Parc des Expositions, Paris",
+    "latitude": 48.8566,
+    "longitude": 2.3522,
+    "startDate": "2025-07-15T18:00:00",
+    "endDate": "2025-07-15T23:00:00",
+    "totalTickets": 5000,
+    "ticketSalesStartDate": "2025-05-01T10:00:00",
+    "ticketSalesEndDate": "2025-07-15T17:00:00",
+    "ticketPrice": 29.99,
+    "hasSeats": true,
+    "staffMembers": [
+      "550e8400-e29b-41d4-a716-446655440000",
+      "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    ]
+  }
+  
+}
+
+script:post-response {
+  if(res.body.value.access_token) {
+    bru.setVar('access_token_set_by_collection_script', res.body.value.access_token);
+     }
+}
