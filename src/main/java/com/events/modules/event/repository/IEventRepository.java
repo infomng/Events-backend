@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -18,4 +19,6 @@ public interface IEventRepository extends JpaRepository<Event, UUID> {
             "AND e.isPublic = true " +
             "AND e.status = com.events.modules.event.enumeration.EventStatusEnum.PUBLISHED")
     List<Event> getAllIncomingEvents();
+
+    Optional<Event> findByIdAndOrganizerId(UUID eventId, UUID organizerId);
 }

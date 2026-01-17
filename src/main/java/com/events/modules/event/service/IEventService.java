@@ -30,4 +30,5 @@ public interface IEventService {
 //TODO:List<EventDto> getParticipants(Long eventId);
 //TODO:EventStatisticsDto getEventStatistics(Long eventId);
     void softDeleteEvent(UUID eventId);
+    void cancelEvent(UUID eventId);
 }

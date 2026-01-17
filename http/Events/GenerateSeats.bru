@@ -1,0 +1,28 @@
+meta {
+  name: GenerateSeats
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{host}}/api/v1/events//seats/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+body:json {
+  [
+    {
+      "seatType": "VIP",
+      "quantity": 20
+    }
+  ]
+}
+
+vars:pre-request {
+  eventId: 
+}

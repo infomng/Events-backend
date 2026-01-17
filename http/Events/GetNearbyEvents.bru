@@ -1,0 +1,17 @@
+meta {
+  name: GetNearbyEvents
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{host}}/api/v1/events/nearby?lat=&lon=&radius=
+  body: none
+  auth: none
+}
+
+params:query {
+  lat: 
+  lon: 
+  radius: 
+}

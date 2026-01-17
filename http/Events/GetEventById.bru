@@ -1,0 +1,15 @@
+meta {
+  name: GetEventById
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{host}}/api/v1/events/
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  eventId: 
+}

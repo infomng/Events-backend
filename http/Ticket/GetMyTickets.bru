@@ -1,0 +1,15 @@
+meta {
+  name: GetMyTickets
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{host}}/api/v1/tickets/my-tickets
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}

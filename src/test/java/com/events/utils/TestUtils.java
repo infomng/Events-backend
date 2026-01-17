@@ -4,6 +4,7 @@ import com.events.common.config.properties.JwtProperties;
 import com.events.common.utils.contants.Constants;
 import com.events.modules.auth.dto.RegisterCommandDto;
 import com.events.modules.auth.refreshtoken.Entity.RefreshToken;
+import com.events.modules.user.dto.GetUserDto;
 import com.events.modules.user.entity.User;
 import com.events.modules.user.enumeration.RoleEnum;
 
@@ -48,7 +49,12 @@ public class TestUtils {
                 .build();
     }
 
-
+    public static GetUserDto getUserDto() {
+        return GetUserDto.builder()
+                .fullName(Constants.JOHN_DOE)
+                .email(Constants.JOHN_DOE_EMAIL)
+                .build();
+    }
 
     public static JwtProperties.RefreshToken getRefreshTokenProps() {
         return new JwtProperties.RefreshToken(Constants.TOKEN, Constants.REFRESH_TOKEN_MIN_DURATION);

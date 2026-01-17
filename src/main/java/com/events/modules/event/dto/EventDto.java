@@ -1,10 +1,12 @@
 package com.events.modules.event.dto;
 
-import lombok.*;
+import lombok.Builder;
+
+import java.util.UUID;
 import java.time.LocalDateTime;
 
 @Builder
-public record EventDto(Long id,
+public record EventDto(UUID id,
      String name,
      String description,
      String location,
@@ -14,5 +16,5 @@ public record EventDto(Long id,
      LocalDateTime endDate,
      Integer availableTickets,
      Double price,
-     Long organizerId){}
+     UUID organizerId){}
 

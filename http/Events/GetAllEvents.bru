@@ -1,0 +1,18 @@
+meta {
+  name: GetAllEvents
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/api/v1/events?page=0&size=10&sort=DESC&country=
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 0
+  size: 10
+  sort: DESC
+  country: 
+}

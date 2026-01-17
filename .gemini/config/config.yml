@@ -1,11 +1,38 @@
+default_profile: project-dev
+
 profiles:
   project-dev:
     permissions:
       shell:
         allow:
+          # File system (safe)
           - mkdir
           - touch
-          - rm
-          - git
+          - ls
+          - pwd
+          - cat
+          - echo
+          - find
+
+          # File manipulation (controlled)
+          - cp
           - mv
+
+          # Git
+          - git
+
+          # Build tools
+          - mvn
+          - mvnw
+          - gradle
+
+        deny:
+          - rm
+          - sudo
+          - chmod
+          - chown
+          - kill
+          - shutdown
+          - reboot
+
         ask: false
