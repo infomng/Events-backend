@@ -1,4 +1,4 @@
-package com.events.modules.auth.config.ratelimit.annotation;
+package com.events.common.config.ratelimit.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

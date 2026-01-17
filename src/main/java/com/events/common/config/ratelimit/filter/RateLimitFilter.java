@@ -1,4 +1,4 @@
-package com.events.modules.auth.config.ratelimit.filter;
+package com.events.common.config.ratelimit.filter;
 
 import com.events.common.utils.contants.Constants;
 import com.events.modules.auth.exception.TooManyRequestException;

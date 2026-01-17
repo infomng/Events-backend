@@ -1,10 +1,13 @@
 package com.events.modules.event.entity;
 
 import com.events.common.abstraction.AuditableEntity;
+import com.events.modules.event.entity.aggregate.Image;
+import com.events.modules.event.entity.aggregate.Seat;
 import com.events.modules.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import com.events.modules.event.enumeration.EventStatusEnum;
 import lombok.experimental.SuperBuilder;
@@ -19,10 +22,9 @@ public class Event extends AuditableEntity {
     private String name;
     private String description;
     private Boolean isPublic;
-    private Boolean isFree;
     private Boolean isFreeEntry;
 
-    private String invitationCode;
+    private Boolean hasInvitationCode;
     @Column(nullable = false)
     private String location;
     private Double latitude;
@@ -35,11 +37,10 @@ public class Event extends AuditableEntity {
     private Integer totalTickets;
 
     private Integer availableTickets;
-    private Double price;
-    private Boolean hasSits;
     private LocalDateTime ticketSalesStartDate;
-
     private LocalDateTime ticketSalesEndDate;
+    private Double price;
+    private Boolean hasSeats;
     @Enumerated(EnumType.STRING)
     private EventStatusEnum status;
 
@@ -65,6 +66,9 @@ public class Event extends AuditableEntity {
     @ManyToOne
     @JoinColumn(name = "organizer_id")
     private User organizer;
+
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private Set<Image> images = new HashSet<>();
 
     public boolean hasAvailableTickets() {
         return availableTickets != null && availableTickets > 0;

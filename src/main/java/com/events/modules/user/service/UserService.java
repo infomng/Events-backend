@@ -28,7 +28,7 @@ public class UserService implements IUserService {
            .isVerified(false)
            .isEnabled(true)
            .isAccountNonExpired(true)
-           .isAccountNonExpired(true)
+           .isAccountNonLocked(true)
            .isCredentialsNonExpired(true)
            .build();
         userRepository.save(user);

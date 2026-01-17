@@ -1,7 +1,7 @@
 package com.events.modules.auth.controller;
 
 import com.events.common.config.properties.JwtProperties;
-import com.events.modules.auth.config.ratelimit.annotation.RateLimit;
+import com.events.common.config.ratelimit.annotation.RateLimit;
 import com.events.modules.auth.dto.AccessTokenDto;
 import com.events.modules.auth.dto.LoginRequestDto;
 import com.events.modules.auth.dto.RegisterCommandDto;
