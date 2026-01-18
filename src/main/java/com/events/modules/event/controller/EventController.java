@@ -86,4 +86,10 @@ public class EventController {
         eventService.cancelEvent(id);
         return ResponseEntity.ok(Result.success());
     }
+
+    @PatchMapping("/{id}/publish")
+    public ResponseEntity<Result<Void>> publishEvent(@PathVariable UUID id) {
+        eventService.publishEvent(id);
+        return ResponseEntity.ok(Result.success());
+    }
 }

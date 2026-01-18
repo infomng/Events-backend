@@ -237,6 +237,21 @@ public class EventService implements IEventService {
 
         // TODO: Trigger refunds for all sold tickets
     }
+
+    @Override
+    public void publishEvent(UUID eventId) {
+        User currentUser = authService.getCurrentUser();
+
+        Event event = eventRepository.findByIdAndOrganizerId(eventId, currentUser.getId())
+                .orElseThrow(() -> new EventForbidenException(eventId));
+
+        if (event.getStatus() != EventStatusEnum.DRAFT) {
+            throw new BadRequestException("Only events with DRAFT status can be published.");
+        }
+
+        event.setStatus(EventStatusEnum.PUBLISHED);
+        eventRepository.save(event);
+    }
 }
 
 

@@ -1,0 +1,15 @@
+meta {
+  name: PublishEvent
+  type: http
+  seq: 11
+}
+
+patch {
+  url: {{host}}/api/v1/events/{{eventId}}/publish
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

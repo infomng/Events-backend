@@ -30,4 +30,14 @@ public class EventControllerTest extends ControllerTestContext {
         mockMvc.perform(patch("/api/v1/events/{id}/cancel", eventId))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void testPublishEvent() throws Exception {
+
+        UUID eventId = UUID.randomUUID();
+        doNothing().when(eventService).publishEvent(eventId);
+
+        mockMvc.perform(patch("/api/v1/events/{id}/publish", eventId))
+                .andExpect(status().isOk());
+    }
 }
