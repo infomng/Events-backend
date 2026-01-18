@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class EventService implements IEventService {
 
+    public static final String ONLY_EVENTS_WITH_DRAFT_STATUS_CAN_BE_PUBLISHED = "Only events with DRAFT status can be published.";
     private final IEventRepository eventRepository;
     private final IAuthService authService;
     private final IEventMapper eventMapper;
@@ -224,7 +225,7 @@ public class EventService implements IEventService {
         User currentUser = authService.getCurrentUser();
 
         Event event = eventRepository.findByIdAndOrganizerId(eventId, currentUser.getId())
-                .orElseThrow(() -> new BadRequestException("Event not found"));
+                .orElseThrow(() -> new BadRequestException(Constants.EVENTS_NOT_FOUND));
 
         if (event.getStatus() != EventStatusEnum.PUBLISHED) {
             throw new BadRequestException("Event cannot be cancelled as it is not in PUBLISHED state.");
@@ -243,10 +244,10 @@ public class EventService implements IEventService {
         User currentUser = authService.getCurrentUser();
 
         Event event = eventRepository.findByIdAndOrganizerId(eventId, currentUser.getId())
-                .orElseThrow(() -> new EventForbidenException(eventId));
+                .orElseThrow(() -> new BadRequestException(Constants.EVENTS_NOT_FOUND));
 
         if (event.getStatus() != EventStatusEnum.DRAFT) {
-            throw new BadRequestException("Only events with DRAFT status can be published.");
+            throw new BadRequestException(Constants.ONLY_EVENTS_WITH_DRAFT_STATUS_CAN_BE_PUBLISHED);
         }
 
         event.setStatus(EventStatusEnum.PUBLISHED);

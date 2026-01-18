@@ -10,6 +10,7 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface IEventMapper {
+    @Mapping(source = "organizer.id", target = "organizerId")
     EventDto toDto(Event event);
     List<EventDto> toDtoList(List<Event> events);
 }

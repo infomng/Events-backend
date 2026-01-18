@@ -5,13 +5,9 @@ meta {
 }
 
 patch {
-  url: {{host}}/api/v1/events/b47fc6b9-60be-4efc-926c-e0c856dd0af9/cancel
+  url: {{host}}/events/b47fc6b9-60be-4efc-926c-e0c856dd0af9/cancel
   body: none
-  auth: bearer
-}
-
-auth:bearer {
-  token: {{ACCESS_TOKEN}}
+  auth: inherit
 }
 
 vars:pre-request {

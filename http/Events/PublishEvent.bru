@@ -5,11 +5,7 @@ meta {
 }
 
 patch {
-  url: {{host}}/api/v1/events/{{eventId}}/publish
+  url: {{host}}/events/b47fc6b9-60be-4efc-926c-e0c856dd0af9/publish
   body: none
-  auth: bearer
-}
-
-auth:bearer {
-  token: {{token}}
+  auth: inherit
 }
