@@ -1,7 +1,7 @@
 default_profile: project-dev
 
 profiles:
-  project-dev:
+  dev:
     permissions:
       shell:
         allow:
