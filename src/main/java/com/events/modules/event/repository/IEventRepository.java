@@ -20,5 +20,7 @@ public interface IEventRepository extends JpaRepository<Event, UUID> {
             "AND e.status = com.events.modules.event.enumeration.EventStatusEnum.PUBLISHED")
     List<Event> getAllIncomingEvents();
 
+
+    @Query("SELECT e FROM Event e WHERE e.id = ?1 AND e.organizer.id = ?2")
     Optional<Event> findByIdAndOrganizerId(UUID eventId, UUID organizerId);
 }

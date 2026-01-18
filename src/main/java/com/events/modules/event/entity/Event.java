@@ -9,6 +9,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import com.events.modules.event.enumeration.EventStatusEnum;
 import lombok.experimental.SuperBuilder;
 
@@ -78,6 +79,10 @@ public class Event extends AuditableEntity {
         LocalDateTime now = LocalDateTime.now();
         return (ticketSalesStartDate == null || now.isAfter(ticketSalesStartDate)) &&
                (ticketSalesEndDate == null || now.isBefore(ticketSalesEndDate));
+    }
+
+    public UUID getOrganizerId() {
+        return organizer != null ? organizer.getId() : null;
     }
 
 }

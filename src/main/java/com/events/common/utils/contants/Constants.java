@@ -21,6 +21,8 @@ public final class Constants {
     public static final String HAS_INVITATION_CODE = "hasInvitationCode";
     public static final String START_DATE = "startDate";
     public static final String END_DATE = "startDate";
+    public static final String ONLY_EVENTS_WITH_DRAFT_STATUS_CAN_BE_PUBLISHED = "Only events with DRAFT status can be published.";
+    public static final String EVENTS_NOT_FOUND = "Event not found";
 
 
     private Constants() {}

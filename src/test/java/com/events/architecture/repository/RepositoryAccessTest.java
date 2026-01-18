@@ -19,6 +19,7 @@ public class RepositoryAccessTest {
                     String entityName = repository.getSimpleName().substring(1, repository.getSimpleName().length() - "Repository".length());
                     String expectedService = entityName + "Service";
                     String expectedServiceTest = entityName + "ServiceTest";
+                    String expectedNestedServiceName = entityName + "Test";
 
                     // check who depends on this repository
                     classes.stream()
@@ -26,10 +27,11 @@ public class RepositoryAccessTest {
                                     .anyMatch(dep -> dep.getTargetClass().equals(repository)))
                             .forEach(dep -> {
                                 if (!dep.getSimpleName().equals(expectedService) &&
-                                        !dep.getSimpleName().equals(expectedServiceTest)) {
+                                        !dep.getSimpleName().startsWith(expectedServiceTest) && !dep.getSimpleName().contains(expectedNestedServiceName)) {
                                     throw new AssertionError(
-                                            repository.getSimpleName() + " should only be accessed by " + expectedService +
-                                                    ", but is accessed by " + dep.getSimpleName()
+                                            repository.getSimpleName() + " should only be accessed by " + expectedService
+                                                    + " or nested test classes that contains: " + expectedNestedServiceName
+                                                    + ", but is accessed by " + dep.getSimpleName()
                                     );
                                 }
                             });
