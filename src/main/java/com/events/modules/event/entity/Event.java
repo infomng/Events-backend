@@ -80,9 +80,4 @@ public class Event extends AuditableEntity {
         return (ticketSalesStartDate == null || now.isAfter(ticketSalesStartDate)) &&
                (ticketSalesEndDate == null || now.isBefore(ticketSalesEndDate));
     }
-
-    public UUID getOrganizerId() {
-        return organizer != null ? organizer.getId() : null;
-    }
-
 }
