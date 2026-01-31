@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 @SQLRestriction("deleted = false")
 public class PriceCategory extends AuditableEntity {
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String name;
 
     @Column(nullable = false)
