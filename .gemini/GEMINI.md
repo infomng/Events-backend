@@ -148,6 +148,16 @@ When you need to throw exceptions in the code, BadRequestException or BusinessEx
 - DTOs for input/output
 - Clear separation of concerns
 
+### Architectural Rules Enforcement
+- **Enum Naming:** Enum classes should have names ending with "Enum".
+- **DTOs as Records:** All DTOs must be Java records.
+- **DTO Naming:** All DTOs must have names ending with "Dto".
+- **Mapper Location:** Classes annotated with `@Mapper` must reside in a `..dto.mapper..` package.
+- **Interface Naming:** Interfaces (that are not annotations) should have names starting with "I".
+- **Repository Access:** A repository interface (e.g., `IUserRepository`) should only be accessed by its corresponding service (e.g., `UserService`) or its tests.
+- **Transactional Services:** Classes annotated with `@Service` should also be annotated with `@Transactional`.
+- **No Entity Return:** Public methods in services should not return JPA entities directly (with `UserService` and `AuthService` being exceptions).
+
 ---
 
 ## 5. Database Design Principles
@@ -167,14 +177,14 @@ When you need to throw exceptions in the code, BadRequestException or BusinessEx
 
 ## 6. Caching Strategy
 
-- Redis used for:
+- Redis is planned for caching:
     - Event listings
     - Event details
     - Frequently accessed reference data
-- Cache invalidation on:
+- Cache invalidation will be implemented upon:
     - Event update
     - Ticket reservation
-- No caching of sensitive data
+- No caching of sensitive data will be allowed.
 
 ---
 
@@ -273,3 +283,4 @@ Gemini must NOT:
 - UUID used for file naming
 - Redis used as distributed cache
 - Clean Architecture enforced from start
+- Noted that some controller endpoints currently return DTOs directly, violating the 'Result Object' rule. These will be refactored to ensure consistency.

@@ -2,19 +2,30 @@ package com.events.modules.event.service;
 
 import com.events.common.exception.BadRequestException;
 import com.events.modules.auth.service.auth.IAuthService;
+import com.events.modules.event.dto.CreateEventCommandDto;
+import com.events.modules.event.dto.PriceCategoryDto;
+import com.events.modules.event.dto.UpdateEventCommandDto;
+import com.events.modules.event.dto.mapper.IEventMapper;
 import com.events.modules.event.entity.Event;
+import com.events.modules.event.entity.PriceCategory;
 import com.events.modules.event.enumeration.EventStatusEnum;
 import com.events.modules.event.repository.IEventRepository;
 import com.events.modules.event.service.impl.EventService;
+import com.events.modules.event.dto.mapper.IPriceCategoryMapper;
 import com.events.modules.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class EventServiceTest {
+class EventServiceTest {
 
     @Mock
     private IEventRepository eventRepository;
@@ -33,6 +44,14 @@ public class EventServiceTest {
     @InjectMocks
     private EventService eventService;
 
+    @Mock
+    private IEventMapper eventMapper;
+
+    @Mock
+    private IPriceCategoryMapper priceCategoryMapper;
+
+
+    private CreateEventCommandDto createEventCommandDto;
     private User organizer;
     private Event event;
     private UUID eventId;
@@ -49,6 +68,139 @@ public class EventServiceTest {
         event.setId(eventId);
         event.setOrganizer(organizer);
         event.setStatus(EventStatusEnum.PUBLISHED);
+
+        createEventCommandDto = new CreateEventCommandDto(
+                "Test Event",
+                "Test Description",
+                true,
+                false,
+                false,
+                "false",
+                "Test Location",
+                0.0,
+                0.0,
+                LocalDateTime.now().plusDays(1),
+                LocalDateTime.now().plusDays(2),
+                100,
+                LocalDateTime.now(),
+                LocalDateTime.now().plusDays(1),
+                10.0,
+                false,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+    }
+
+    @Nested
+    class CreateEventTests {
+//
+//        @Test
+//        void shouldCreateEventWithDefaultCategoriesWhenNoCategoriesAreProvided() {
+//            when(authService.getCurrentUser()).thenReturn(organizer);
+//            when(eventMapper.toEntity(any(CreateEventCommandDto.class))).thenReturn(new Event());
+//
+//            eventService.createEvent(createEventCommandDto);
+//
+//            ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+//            verify(eventRepository).save(eventCaptor.capture());
+//
+//            Event savedEvent = eventCaptor.getValue();
+//            assertEquals(4, savedEvent.getPriceCategories().size());
+//        }
+
+        @Test
+        void shouldCreateEventWithCustomCategories() {
+            PriceCategoryDto categoryDto = new PriceCategoryDto( "CUSTOM", BigDecimal.TEN, 100);
+            createEventCommandDto = new CreateEventCommandDto(
+                    "Test Event",
+                    "Test Description",
+                    true,
+                    false,
+                    false,
+                    "false",
+                    "Test Location",
+                    0.0,
+                    0.0,
+                    LocalDateTime.now().plusDays(1),
+                    LocalDateTime.now().plusDays(2),
+                    100,
+                    LocalDateTime.now(),
+                    LocalDateTime.now().plusDays(1),
+                    10.0,
+                    false,
+                    Collections.emptyList(),
+                    List.of(categoryDto)
+            );
+            Event event = Event.builder()
+                    .availableTickets(100)
+                    .build();
+
+            event.setPriceCategories(Collections.singleton(PriceCategory.builder().name("CUSTOM").price(BigDecimal.TEN).build()));
+
+            when(authService.getCurrentUser()).thenReturn(organizer);
+            when(eventMapper.toEntity(any(CreateEventCommandDto.class))).thenReturn(event);
+
+            eventService.createEvent(createEventCommandDto);
+
+            ArgumentCaptor<Event> eventCaptor = ArgumentCaptor.forClass(Event.class);
+            verify(eventRepository).save(eventCaptor.capture());
+
+            Event savedEvent = eventCaptor.getValue();
+            assertEquals(1, savedEvent.getPriceCategories().size());
+            assertEquals("CUSTOM", savedEvent.getPriceCategories().iterator().next().getName());
+        }
+
+        @Test
+        void shouldThrowExceptionWhenStartDateIsAfterEndDate() {
+            createEventCommandDto = new CreateEventCommandDto(
+                    "Test Event",
+                    "Test Description",
+                    true,
+                    false,
+                    false,
+                    "false",
+                    "Test Location",
+                    0.0,
+                    0.0,
+                    LocalDateTime.now().plusDays(2),
+                    LocalDateTime.now().plusDays(1),
+                    100,
+                    LocalDateTime.now(),
+                    LocalDateTime.now().plusDays(1),
+                    10.0,
+                    false,
+                    Collections.emptyList(),
+                    Collections.emptyList()
+            );
+
+            assertThrows(BadRequestException.class, () -> eventService.createEvent(createEventCommandDto));
+        }
+
+        @Test
+        void shouldThrowExceptionWhenTicketSalesStartDateIsAfterTicketSalesEndDate() {
+            createEventCommandDto = new CreateEventCommandDto(
+                    "Test Event",
+                    "Test Description",
+                    true,
+                    false,
+                    false,
+                    "false",
+                    "Test Location",
+                    0.0,
+                    0.0,
+                    LocalDateTime.now().plusDays(1),
+                    LocalDateTime.now().plusDays(2),
+                    100,
+                    LocalDateTime.now().plusDays(1),
+                    LocalDateTime.now(),
+                    10.0,
+                    false,
+                    Collections.emptyList(),
+                    Collections.emptyList()
+            );
+
+            assertThrows(BadRequestException.class, () -> eventService.createEvent(createEventCommandDto));
+        }
     }
 
     @Nested
@@ -138,6 +290,45 @@ public class EventServiceTest {
             verify(eventRepository, never()).save(any(Event.class));
         }
     }
+
+//    @Nested
+//    class UpdateEventTests {
+//
+//        @Test
+//        void shouldUpdateEventCategories() {
+//            // Given
+//            UpdateEventCommandDto command = new UpdateEventCommandDto(
+//                    "Updated Name",
+//                    "Updated Desc",
+//                    "Updated Loc",
+//                    1.0, 1.0,
+//                    LocalDateTime.now().plusDays(5),
+//                    LocalDateTime.now().plusDays(6),
+//                    LocalDateTime.now().plusDays(1),
+//                    LocalDateTime.now().plusDays(2),
+//                    200,
+//                    20.0,
+//                    EventStatusEnum.DRAFT,
+//                    List.of(new PriceCategoryDto(null, "NEW_CAT", BigDecimal.ONE, 100))
+//            );
+//
+//            Event eventToUpdate = eventMapper.toEntity();
+//            eventToUpdate.setId(eventId);
+//            eventToUpdate.setOrganizer(organizer);
+//
+//
+//            when(authService.getCurrentUser()).thenReturn(organizer);
+//            when(eventRepository.findById(eventId)).thenReturn(Optional.of(eventToUpdate));
+//            when(priceCategoryMapper.toEntityList(anyList())).thenReturn(List.of(PriceCategory.builder().name("NEW_CAT").price(BigDecimal.ONE).build()));
+//
+//            // When
+//            eventService.updateEvent(eventId, command);
+//
+//            // Then
+//            assertEquals(1, eventToUpdate.getPriceCategories().size());
+//            assertEquals("NEW_CAT", eventToUpdate.getPriceCategories().iterator().next().getName());
+//        }
+//    }
 
 
 }

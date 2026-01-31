@@ -9,10 +9,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -44,6 +41,7 @@ public class Seat extends AuditableEntity{
     @Column(name = "row_number")
     private String rowNumber;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SeatTypeEnum seatType = SeatTypeEnum.REGULAR;

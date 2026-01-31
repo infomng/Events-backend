@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,9 +22,15 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/events")
 @RequiredArgsConstructor
+@Validated
 public class EventController {
 
     private final IEventService eventService;
+
+    @GetMapping("default-price-categories")
+    public ResponseEntity<Result<List<String>>> getDefaultPriceCategories() {
+        return ResponseEntity.ok(Result.success(eventService.getDefaultPriceCategories()));
+    }
 
     @PostMapping()
     public ResponseEntity<Result<UUID>> create(@Valid @RequestBody CreateEventCommandDto command) {

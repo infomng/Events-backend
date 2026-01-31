@@ -1,8 +1,7 @@
 package com.events.modules.event.dto;
 
-import com.events.common.exception.BadRequestException;
-import com.events.common.utils.contants.Constants;
-import com.events.modules.event.enumeration.EventStatusEnum;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
@@ -25,5 +24,7 @@ public record CreateEventCommandDto(@NotNull String name,
                                     LocalDateTime ticketSalesEndDate,
                                     Double ticketPrice,
                                     Boolean hasSeats,
-                                    List<UUID> staffMembers
+                                    List<UUID> staffMembers,
+                                    @NotEmpty(message = "At least one price category is required")
+                                    List< @Valid PriceCategoryDto> categories
 ) { }

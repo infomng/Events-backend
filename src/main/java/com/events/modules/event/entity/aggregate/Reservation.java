@@ -3,10 +3,7 @@ package com.events.modules.event.entity.aggregate;
 import com.events.common.abstraction.AuditableEntity;
 import com.events.modules.event.enumeration.ReservationStatusEnum;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
@@ -39,10 +36,8 @@ public class Reservation extends AuditableEntity {
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private ReservationStatusEnum status = ReservationStatusEnum.ACTIVE;
-
-    @Column(updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
 
 }

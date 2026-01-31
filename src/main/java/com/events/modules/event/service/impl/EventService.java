@@ -9,25 +9,32 @@ import com.events.modules.event.dto.EventDto;
 import com.events.modules.event.dto.GenerateSeatDto;
 import com.events.modules.event.dto.UpdateEventCommandDto;
 import com.events.modules.event.entity.Event;
+import com.events.modules.event.entity.PriceCategory;
 import com.events.modules.event.entity.aggregate.Image;
 import com.events.modules.event.entity.aggregate.Seat;
+import com.events.modules.event.enumeration.DefaultPriceCategoryEnum;
 import com.events.modules.event.enumeration.EventStatusEnum;
 import com.events.modules.event.exception.EventForbidenException;
 import com.events.modules.event.exception.EventNotFoundException;
 import com.events.modules.event.dto.mapper.IEventMapper;
 import com.events.modules.event.repository.IEventRepository;
 import com.events.modules.event.service.IEventService;
+import com.events.modules.event.dto.mapper.IPriceCategoryMapper;
 import com.events.modules.user.entity.User;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -37,6 +44,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class EventService implements IEventService {
 
     public static final String ONLY_EVENTS_WITH_DRAFT_STATUS_CAN_BE_PUBLISHED = "Only events with DRAFT status can be published.";
@@ -44,51 +52,30 @@ public class EventService implements IEventService {
     private final IAuthService authService;
     private final IEventMapper eventMapper;
     private final ISupabaseStorageService supabaseStorageService;
+    private final IPriceCategoryMapper priceCategoryMapper;
 
     @Override
     public UUID createEvent(CreateEventCommandDto command) {
         if (command.startDate().isAfter(command.endDate())) {
             throw new BadRequestException(Constants.INVALID_DATE);
         }
-
         if (command.ticketSalesStartDate() != null
                 && command.ticketSalesEndDate() != null
                 && command.ticketSalesStartDate().isAfter(command.ticketSalesEndDate())) {
             throw new BadRequestException(Constants.INVALID_START_DATE);
         }
+        Event event = eventMapper.toEntity(command);
 
-        if (!command.isFreeEntry() && (command.ticketPrice() == null || command.ticketPrice() <= 0)) {
-            throw new BadRequestException(Constants.PRICE_MUST_BE_POSITIVE);
-        }
-
-        if (command.isFreeEntry() && (command.ticketPrice() != null)) {
-            throw new BadRequestException(Constants.PRICE_MUST_BE_NULL_FOR_FREE_EVENT);
-        }
-
+        event.getPriceCategories().forEach(category -> category.setEvent(event));
         User currentUser = authService.getCurrentUser();
+        event.setOrganizer(currentUser);
 
-        Event event = Event.builder()
-                .name(command.name())
-                .description(command.description())
-                .location(command.location())
-                .latitude(command.latitude())
-                .longitude(command.longitude())
-                .startDate(command.startDate())
-                .endDate(command.endDate())
-                .organizer(currentUser)
-                .status(EventStatusEnum.DRAFT)
-                .price(command.isFreeEntry() ? 0 : command.ticketPrice())
-                .ticketSalesEndDate(command.ticketSalesStartDate())
-                .ticketSalesStartDate(command.ticketSalesEndDate())
-                .totalTickets(command.totalTickets())
-                .availableTickets(command.totalTickets())
-                .isFreeEntry(command.isFreeEntry())
-                .isPublic(command.isPublic())
-                .hasSeats(command.hasSeats())
-                .hasInvitationCode(command.hasInvitationCode())
-                .build();
 
-        eventRepository.save(event);
+        try {
+            eventRepository.save(event);
+        } catch (Exception e) {
+            log.error("error message", e);
+        }
 
         return event.getId();
     }
@@ -182,7 +169,7 @@ public class EventService implements IEventService {
         event.setSeats(seats);
     }
 
-    private static void updateEvent(UpdateEventCommandDto command, Event event) {
+    private void updateEvent(UpdateEventCommandDto command, Event event) {
         if(command.totalTickets() < event.getAvailableTickets()) {
             throw new BadRequestException("Total tickets cannot be less than available tickets");
         }
@@ -204,9 +191,17 @@ public class EventService implements IEventService {
         event.setStatus(command.status());
         event.setLatitude(command.latitude());
         event.setLongitude(command.longitude());
-        event.setTotalTickets(command.totalTickets());
-        event.setPrice(command.ticketPrice());
-        event.setAvailableTickets(command.totalTickets());
+
+        if (command.categories() != null) {
+            if (command.categories().isEmpty()) {
+                throw new BadRequestException("Event must have at least one category.");
+            }
+            Set<PriceCategory> updatedCategories = new HashSet<>(priceCategoryMapper.toEntityList(command.categories()));
+            updatedCategories.forEach(category -> category.setEvent(event));
+
+            event.getPriceCategories().clear();
+            event.getPriceCategories().addAll(updatedCategories);
+        }
     }
 
     @Override
@@ -252,6 +247,12 @@ public class EventService implements IEventService {
 
         event.setStatus(EventStatusEnum.PUBLISHED);
         eventRepository.save(event);
+    }
+
+    @Override
+    public List<String> getDefaultPriceCategories() {
+        return List.of(DefaultPriceCategoryEnum.FREE.name(), DefaultPriceCategoryEnum.REGULAR.name(),
+                DefaultPriceCategoryEnum.VIP.name(), DefaultPriceCategoryEnum.PREMIUM.name());
     }
 }
 

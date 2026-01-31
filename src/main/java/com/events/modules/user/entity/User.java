@@ -25,21 +25,27 @@ public class User extends AuditableEntity {
     private String verificationToken;
     private String resetPasswordToken;
 
+    @Builder.Default
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean isVerified = false;
 
+    @Builder.Default
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean isEnabled = true;
 
+    @Builder.Default()
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean isAccountNonExpired = true;
 
+    @Builder.Default
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean isAccountNonLocked = true;
 
+    @Builder.Default
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean isCredentialsNonExpired = true;
 
+    @Builder.Default
     @OneToMany(mappedBy = "organizer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Event> organizedEvents = new HashSet<>();
 
