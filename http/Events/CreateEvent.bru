@@ -31,13 +31,13 @@ body:json {
     "staffMembers": [
       "550e8400-e29b-41d4-a716-446655440000",
       "3fa85f64-5717-4562-b3fc-2c963f66afa6"
-    ]
+    ],
+    "categories":[{
+      "price" : 50,
+      "totalTickets" : 200,
+      "name": "FREE"
+      
+    }]
   }
   
-}
-
-script:post-response {
-  if(res.body.value.access_token) {
-    bru.setVar('access_token_set_by_collection_script', res.body.value.access_token);
-     }
 }
