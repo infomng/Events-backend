@@ -1,4 +1,4 @@
-package com.events.modules.event.entity;
+package com.events.modules.event.entity.aggregate;
 
 import com.events.common.abstraction.AuditableEntity;
 

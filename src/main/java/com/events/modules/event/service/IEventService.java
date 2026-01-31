@@ -32,5 +32,7 @@ public interface IEventService {
     void softDeleteEvent(UUID eventId);
         void cancelEvent(UUID eventId);
         void publishEvent(UUID eventId);
-    }
+
+    List<String> getDefaultPriceCategories();
+}
     
