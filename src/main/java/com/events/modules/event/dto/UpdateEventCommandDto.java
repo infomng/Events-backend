@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public record UpdateEventCommandDto(
         String name,
@@ -19,6 +20,7 @@ public record UpdateEventCommandDto(
         Integer totalTickets,
         Double ticketPrice,
         EventStatusEnum status,
-        @Valid List<PriceCategoryDto> categories
+        @Valid List<PriceCategoryDto> categories,
+        UUID categoryId
 ) {}
 

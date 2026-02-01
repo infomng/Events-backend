@@ -34,5 +34,7 @@ public interface IEventService {
         void publishEvent(UUID eventId);
 
     List<String> getDefaultPriceCategories();
+
+    List<String> getCountries();
 }
     
