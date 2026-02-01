@@ -14,6 +14,8 @@ import java.util.List;
         uses = {IPriceCategoryMapper.class})
 public interface IEventMapper {
     @Mapping(source = "organizer.id", target = "organizerId")
+    @Mapping(source = "category.id", target = "categoryId")
+    @Mapping(source = "category.name", target = "categoryName")
     @Mapping(source = "priceCategories", target = "categories")
     EventDto toDto(Event event);
 
@@ -25,6 +27,7 @@ public interface IEventMapper {
     @Mapping(target = "staff", ignore = true)
     @Mapping(target = "seats", ignore = true)
     @Mapping(target = "images", ignore = true)
+    @Mapping(target = "category", ignore = true)
     @Mapping(target = "priceCategories", source = "categories")
     @Mapping(target = "status", constant = "DRAFT")
     Event toEntity(CreateEventCommandDto createEventCommandDto);

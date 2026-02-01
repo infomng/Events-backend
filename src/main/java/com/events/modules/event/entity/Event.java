@@ -1,6 +1,7 @@
 package com.events.modules.event.entity;
 
 import com.events.common.abstraction.AuditableEntity;
+import com.events.modules.event.entity.aggregate.Category;
 import com.events.modules.event.entity.aggregate.Image;
 import com.events.modules.event.entity.aggregate.Seat;
 import com.events.modules.user.entity.User;
@@ -101,6 +102,10 @@ public class Event extends AuditableEntity {
     @Builder.Default
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<PriceCategory> priceCategories = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     @PrePersist
     @PreUpdate

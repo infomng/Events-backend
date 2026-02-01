@@ -27,6 +27,8 @@ public record EventDto(UUID id,
                        Boolean hasSeats,
                        EventStatusEnum status,
                        UUID organizerId,
+                       UUID categoryId,
+                       String categoryName,
                        List<PriceCategoryDto> categories
 ) {
 

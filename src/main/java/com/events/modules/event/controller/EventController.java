@@ -32,6 +32,12 @@ public class EventController {
         return ResponseEntity.ok(Result.success(eventService.getDefaultPriceCategories()));
     }
 
+
+    @GetMapping("countries")
+    public ResponseEntity<Result<List<String>>> getCountries() {
+        return ResponseEntity.ok(Result.success(eventService.getCountries()));
+    }
+
     @PostMapping()
     public ResponseEntity<Result<UUID>> create(@Valid @RequestBody CreateEventCommandDto command) {
         return ResponseEntity.ok(Result.success(eventService.createEvent(command)));
