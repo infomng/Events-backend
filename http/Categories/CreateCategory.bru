@@ -1,0 +1,18 @@
+meta {
+  name: CreateCategory
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/categories
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Music",
+    "description": "Music events and concerts"
+  }
+}
