@@ -4,20 +4,24 @@ import com.events.common.supabase.service.ISupabaseStorageService;
 import com.events.common.utils.contants.Constants;
 import com.events.modules.auth.service.auth.IAuthService;
 import com.events.common.exception.BadRequestException;
+import com.events.modules.event.dto.CategoryDto;
 import com.events.modules.event.dto.CreateEventCommandDto;
 import com.events.modules.event.dto.EventDto;
 import com.events.modules.event.dto.GenerateSeatDto;
 import com.events.modules.event.dto.UpdateEventCommandDto;
 import com.events.modules.event.entity.Event;
 import com.events.modules.event.entity.PriceCategory;
+import com.events.modules.event.entity.aggregate.Category;
 import com.events.modules.event.entity.aggregate.Image;
 import com.events.modules.event.entity.aggregate.Seat;
 import com.events.modules.event.enumeration.DefaultPriceCategoryEnum;
 import com.events.modules.event.enumeration.EventStatusEnum;
 import com.events.modules.event.exception.EventForbidenException;
 import com.events.modules.event.exception.EventNotFoundException;
+import com.events.modules.event.dto.mapper.ICategoryMapper;
 import com.events.modules.event.dto.mapper.IEventMapper;
 import com.events.modules.event.repository.IEventRepository;
+import com.events.modules.event.service.ICategoryService;
 import com.events.modules.event.service.IEventService;
 import com.events.modules.event.dto.mapper.IPriceCategoryMapper;
 import com.events.modules.user.entity.User;
@@ -29,11 +33,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +51,8 @@ public class EventService implements IEventService {
 
     public static final String ONLY_EVENTS_WITH_DRAFT_STATUS_CAN_BE_PUBLISHED = "Only events with DRAFT status can be published.";
     private final IEventRepository eventRepository;
+    private final ICategoryService categoryService;
+    private final ICategoryMapper categoryMapper;
     private final IAuthService authService;
     private final IEventMapper eventMapper;
     private final ISupabaseStorageService supabaseStorageService;
@@ -64,9 +68,17 @@ public class EventService implements IEventService {
                 && command.ticketSalesStartDate().isAfter(command.ticketSalesEndDate())) {
             throw new BadRequestException(Constants.INVALID_START_DATE);
         }
+
+        // Fetch and validate category via CategoryService
+        CategoryDto categoryDto = categoryService.getCategoryById(command.categoryId());
+        Category category = categoryMapper.toEntity(categoryDto);
+
         Event event = eventMapper.toEntity(command);
 
-        event.getPriceCategories().forEach(category -> category.setEvent(event));
+        // Link event to category
+        event.setCategory(category);
+
+        event.getPriceCategories().forEach(priceCategory -> priceCategory.setEvent(event));
         User currentUser = authService.getCurrentUser();
         event.setOrganizer(currentUser);
 
@@ -192,6 +204,13 @@ public class EventService implements IEventService {
         event.setLatitude(command.latitude());
         event.setLongitude(command.longitude());
 
+        // Update category if provided
+        if (command.categoryId() != null) {
+            CategoryDto categoryDto = categoryService.getCategoryById(command.categoryId());
+            Category category = categoryMapper.toEntity(categoryDto);
+            event.setCategory(category);
+        }
+
         if (command.categories() != null) {
             if (command.categories().isEmpty()) {
                 throw new BadRequestException("Event must have at least one category.");
@@ -253,6 +272,11 @@ public class EventService implements IEventService {
     public List<String> getDefaultPriceCategories() {
         return List.of(DefaultPriceCategoryEnum.FREE.name(), DefaultPriceCategoryEnum.REGULAR.name(),
                 DefaultPriceCategoryEnum.VIP.name(), DefaultPriceCategoryEnum.PREMIUM.name());
+    }
+
+    @Override
+    public List<String> getCountries() {
+        return List.of();
     }
 }
 
