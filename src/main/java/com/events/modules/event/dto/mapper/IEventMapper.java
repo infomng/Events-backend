@@ -16,7 +16,11 @@ public interface IEventMapper {
     @Mapping(source = "organizer.id", target = "organizerId")
     @Mapping(source = "category.id", target = "categoryId")
     @Mapping(source = "category.name", target = "categoryName")
-    @Mapping(source = "priceCategories", target = "categories")
+    @Mapping(source = "country.id", target = "countryId")
+    @Mapping(source = "country.name", target = "countryName")
+    @Mapping(source = "country.code", target = "countryCode")
+    @Mapping(source = "priceCategories", target = "priceCategories")
+    @Mapping(source = "country", target = "country")
     EventDto toDto(Event event);
 
     List<EventDto> toDtoList(List<Event> events);
@@ -28,6 +32,7 @@ public interface IEventMapper {
     @Mapping(target = "seats", ignore = true)
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "category", ignore = true)
+    @Mapping(target = "country", ignore = true)
     @Mapping(target = "priceCategories", source = "categories")
     @Mapping(target = "status", constant = "DRAFT")
     Event toEntity(CreateEventCommandDto createEventCommandDto);
