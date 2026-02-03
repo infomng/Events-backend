@@ -1,7 +1,8 @@
 package com.events.modules.event.entity;
 
 import com.events.common.abstraction.AuditableEntity;
-import com.events.modules.event.entity.aggregate.Category;
+import com.events.modules.category.entity.Category;
+import com.events.modules.country.entity.Country;
 import com.events.modules.event.entity.aggregate.Image;
 import com.events.modules.event.entity.aggregate.Seat;
 import com.events.modules.user.entity.User;
@@ -106,6 +107,10 @@ public class Event extends AuditableEntity {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @ManyToOne
+    @JoinColumn(name = "country_id")
+    private Country country;
 
     @PrePersist
     @PreUpdate

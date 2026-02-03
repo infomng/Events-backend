@@ -46,7 +46,9 @@ The codebase follows a **feature-based modular architecture** under `com.events.
 
 - **auth**: Authentication, JWT management, OAuth2 integration, refresh tokens
 - **user**: User management and profiles
-- **event**: Core event management with categories, seats, and reservations
+- **event**: Core event management with price categories, seats, and reservations
+- **category**: Event category management (refactored from event module)
+- **country**: Country management for event locations
 - **booking**: Booking lifecycle and reservation management
 - **ticket**: Ticket generation and management
 - **payment**: Payment processing
@@ -54,11 +56,12 @@ The codebase follows a **feature-based modular architecture** under `com.events.
 
 Each module contains its own:
 - `dto/`: Data Transfer Objects (must be records ending with "Dto")
-- `entity/`: JPA entities
+- `entity/`: JPA entities (may include `aggregate/` subdirectory for embedded entities)
 - `repository/`: Spring Data JPA repositories (interfaces start with "I")
 - `service/`: Business logic (must be `@Transactional` and return DTOs, not entities)
 - `controller/`: REST endpoints (should return `Result<T>` wrapper)
 - `exception/`: Module-specific exceptions
+- `enumeration/`: Module-specific enums (must end with "Enum")
 - `dto/mapper/`: MapStruct mappers (interfaces start with "I", in `..dto.mapper..` package)
 
 ### Common Infrastructure Layer
@@ -77,27 +80,36 @@ Each module contains its own:
 All domain entities extend from:
 
 1. **BaseEntity**: Provides UUID `id` and soft-delete `isActive` flag with Hibernate filters
-2. **AuditableEntity**: Adds `createdDate`, `lastModifiedDate`, `createdBy`, `lastModifiedBy` via Spring Data JPA auditing
+2. **AuditableEntity**: Adds `createdAt`, `updatedAt`, `createdBy`, `updatedBy` via Spring Data JPA auditing
 
 Example: `Event extends AuditableEntity extends BaseEntity`
+
+Soft-delete implementation:
+- Base approach: `isActive` flag on `BaseEntity` with `@Filter(name = "activeFilter")`
+- Alternative approach: `@SQLDelete` and `@SQLRestriction` annotations (used by some entities like `PriceCategory`)
+- Both approaches achieve soft-delete functionality
 
 ### Result Pattern
 
 Controllers must wrap responses in `Result<T>`:
 ```java
 Result.success(data)      // Success with data
-Result.success()          // Success without data
+Result.success()          // Success without data (returns EmptyResult)
 Result.failure(error)     // Failure with ProblemDetail
 ```
+
+Controllers return `ResponseEntity<Result<T>>` from endpoints
 
 ### Architecture Tests
 
 ArchUnit tests enforce architecture rules in `src/test/java/com/events/architecture`:
-- Services must be `@Transactional`
-- Service public methods should not return JPA entities (except `UserService` and `AuthService`)
-- DTOs must be records with names ending in "Dto"
-- Enums must have names ending with "Enum"
-- Repository interfaces (e.g., `IUserRepository`) should only be accessed by their corresponding service (e.g., `UserService`)
+- **ServiceArchitectureTest**: Services must be `@Transactional`
+- **ServiceArchitectureTest**: Service public methods should not return JPA entities (except `UserService` and `AuthService`)
+- **DtoArchitectureTest**: DTOs must be records with names ending in "Dto"
+- **DtoArchitectureTest**: MapStruct mappers must reside in `..dto.mapper..` package
+- **EnumNamingTest**: Enums must have names ending with "Enum"
+- **InterfaceNamingTest**: Interfaces must start with "I"
+- **RepositoryAccessTest**: Repository interfaces (e.g., `IUserRepository`) should only be accessed by their corresponding service (e.g., `UserService`)
 
 ## Key Design Patterns
 
@@ -106,7 +118,9 @@ ArchUnit tests enforce architecture rules in `src/test/java/com/events/architect
 The `Event` entity uses aggregate pattern with embedded value objects:
 - `Event.images`: Set of `Image` (stored in Supabase, metadata in DB)
 - `Event.seats`: Set of `Seat` with section, row, number
-- `Event.eventCategories`: Set of `PriceCategory` (many-to-many join entity)
+- `Event.priceCategories`: Set of `PriceCategory` with category name and price
+- `Event.category`: Many-to-one relationship with `Category`
+- `Event.country`: Many-to-one relationship with `Country`
 - `Event.attendees`, `Event.staff`: Many-to-many with `User`
 
 ### Supabase Storage Integration
@@ -124,18 +138,24 @@ MapStruct mappers are configured with Lombok binding in `pom.xml`:
 <path>
     <groupId>org.projectlombok</groupId>
     <artifactId>lombok-mapstruct-binding</artifactId>
-    <version>${lombok-mapstruct-binding-version}</version>
+    <version>0.2.0</version>
 </path>
 ```
 
+MapStruct version: 1.6.3
+
 Mapper pattern:
 ```java
-@Mapper(componentModel = "spring", uses = {IOtherMapper.class})
+@Mapper(componentModel = "spring",
+        unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        uses = {IOtherMapper.class})
 public interface IEventMapper {
     EventDto toDto(Event event);
     Event toEntity(CreateEventCommandDto dto);
 }
 ```
+
+Mappers are Spring beans (via `componentModel = "spring"`) and can be injected into services
 
 ### OAuth2 + JWT Authentication
 
@@ -147,11 +167,15 @@ public interface IEventMapper {
 
 ## Exception Handling
 
-Global exception handling configured. Prefer throwing:
-- `BadRequestException` for client errors
+Global exception handling via `GlobalExceptionHandler` with `@RestControllerAdvice`. Prefer throwing:
+- `BadRequestException` for client errors (HTTP 400)
 - `BusinessException` for business rule violations
-- Custom domain exceptions (e.g., `EventNotFoundException`, `EventForbidenException`)
+- `ServerException` for server-side errors (HTTP 500)
+- `ResourceNotFoundException` for missing resources (HTTP 404)
+- Custom domain exceptions (e.g., `EventNotFoundException`, `EventForbidenException`, `CategoryNotFoundException`, `CategoryInUseException`, `CountryNotFoundException`, `CountryInUseException`)
+- Auth exceptions (e.g., `UnauthorizedException`, `UserNotFoundException`, `InvalidRefreshTokenException`, `EmailAlreadyExistException`)
 
+Exception handlers return `Result.failure(ProblemDetail)` with appropriate HTTP status codes.
 Do not expose stack traces to clients.
 
 ## Database Configuration

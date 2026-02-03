@@ -1,6 +1,7 @@
 package com.events.modules.user.entity;
 
 import com.events.common.abstraction.AuditableEntity;
+import com.events.modules.country.entity.Country;
 import com.events.modules.event.entity.Event;
 import com.events.modules.user.enumeration.RoleEnum;
 import jakarta.persistence.*;
@@ -57,5 +58,9 @@ public class User extends AuditableEntity {
 
     @Enumerated(EnumType.STRING)
     private RoleEnum role;
+
+    @ManyToOne
+    @JoinColumn(name = "country_id")
+    private Country country;
 }
 

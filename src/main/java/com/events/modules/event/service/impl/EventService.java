@@ -4,24 +4,25 @@ import com.events.common.supabase.service.ISupabaseStorageService;
 import com.events.common.utils.contants.Constants;
 import com.events.modules.auth.service.auth.IAuthService;
 import com.events.common.exception.BadRequestException;
-import com.events.modules.event.dto.CategoryDto;
-import com.events.modules.event.dto.CreateEventCommandDto;
-import com.events.modules.event.dto.EventDto;
-import com.events.modules.event.dto.GenerateSeatDto;
-import com.events.modules.event.dto.UpdateEventCommandDto;
+import com.events.modules.category.dto.CategoryDto;
+import com.events.modules.category.dto.mapper.ICategoryMapper;
+import com.events.modules.category.entity.Category;
+import com.events.modules.category.service.ICategoryService;
+import com.events.modules.country.dto.CountryDto;
+import com.events.modules.country.dto.mapper.ICountryMapper;
+import com.events.modules.country.entity.Country;
+import com.events.modules.country.service.ICountryService;
+import com.events.modules.event.dto.*;
 import com.events.modules.event.entity.Event;
 import com.events.modules.event.entity.PriceCategory;
-import com.events.modules.event.entity.aggregate.Category;
 import com.events.modules.event.entity.aggregate.Image;
 import com.events.modules.event.entity.aggregate.Seat;
 import com.events.modules.event.enumeration.DefaultPriceCategoryEnum;
 import com.events.modules.event.enumeration.EventStatusEnum;
 import com.events.modules.event.exception.EventForbidenException;
 import com.events.modules.event.exception.EventNotFoundException;
-import com.events.modules.event.dto.mapper.ICategoryMapper;
 import com.events.modules.event.dto.mapper.IEventMapper;
 import com.events.modules.event.repository.IEventRepository;
-import com.events.modules.event.service.ICategoryService;
 import com.events.modules.event.service.IEventService;
 import com.events.modules.event.dto.mapper.IPriceCategoryMapper;
 import com.events.modules.user.entity.User;
@@ -57,6 +58,8 @@ public class EventService implements IEventService {
     private final IEventMapper eventMapper;
     private final ISupabaseStorageService supabaseStorageService;
     private final IPriceCategoryMapper priceCategoryMapper;
+    private final ICountryService countryService;
+    private final ICountryMapper countryMapper;
 
     @Override
     public UUID createEvent(CreateEventCommandDto command) {
@@ -73,21 +76,20 @@ public class EventService implements IEventService {
         CategoryDto categoryDto = categoryService.getCategoryById(command.categoryId());
         Category category = categoryMapper.toEntity(categoryDto);
 
+        CountryDto countryDto = countryService.getCountryById(command.countryId());
+        Country country = countryMapper.toEntity(countryDto);
+
         Event event = eventMapper.toEntity(command);
 
         // Link event to category
         event.setCategory(category);
+        event.setCountry(country);
 
         event.getPriceCategories().forEach(priceCategory -> priceCategory.setEvent(event));
         User currentUser = authService.getCurrentUser();
         event.setOrganizer(currentUser);
 
-
-        try {
-            eventRepository.save(event);
-        } catch (Exception e) {
-            log.error("error message", e);
-        }
+        eventRepository.save(event);
 
         return event.getId();
     }

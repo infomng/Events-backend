@@ -1,5 +1,6 @@
 package com.events.modules.event.dto;
 
+import com.events.modules.country.dto.CountryDto;
 import com.events.modules.event.enumeration.EventStatusEnum;
 import lombok.Builder;
 
@@ -23,13 +24,16 @@ public record EventDto(UUID id,
                        Integer availableTickets,
                        LocalDateTime ticketSalesStartDate,
                        LocalDateTime ticketSalesEndDate,
-                       Double price,
                        Boolean hasSeats,
                        EventStatusEnum status,
                        UUID organizerId,
                        UUID categoryId,
                        String categoryName,
-                       List<PriceCategoryDto> categories
+                       UUID countryId,
+                       String countryName,
+                       String countryCode,
+                       CountryDto country,
+                       List<PriceCategoryDto> priceCategories
 ) {
 
 }

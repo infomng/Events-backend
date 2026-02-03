@@ -3,6 +3,11 @@ package com.events.common.exception;
 import com.events.common.result.EmptyResult;
 import com.events.common.result.Result;
 import com.events.common.utils.contants.Constants;
+import com.events.modules.category.exception.CategoryInUseException;
+import com.events.modules.category.exception.CategoryNotFoundException;
+import com.events.modules.country.exception.CountryInUseException;
+import com.events.modules.country.exception.CountryNotFoundException;
+import com.events.modules.event.exception.EventNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -82,6 +87,28 @@ public class GlobalExceptionHandler {
         detail.setProperty(Constants.TIMESTAMP, Instant.now().toString());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
+                .body(EmptyResult.failure(detail));
+    }
+
+    @ExceptionHandler({EventNotFoundException.class, CategoryNotFoundException.class, CountryNotFoundException.class})
+    public ResponseEntity<EmptyResult> handleNotFound(RuntimeException ex) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        detail.setTitle(ex.getClass().getSimpleName());
+        detail.setDetail(ex.getMessage());
+        detail.setProperty(Constants.TIMESTAMP, Instant.now().toString());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(EmptyResult.failure(detail));
+    }
+
+    @ExceptionHandler({CategoryInUseException.class, CountryInUseException.class})
+    public ResponseEntity<EmptyResult> handleInUse(RuntimeException ex) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        detail.setTitle(ex.getClass().getSimpleName());
+        detail.setDetail(ex.getMessage());
+        detail.setProperty(Constants.TIMESTAMP, Instant.now().toString());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
                 .body(EmptyResult.failure(detail));
     }
 
