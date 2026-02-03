@@ -2,14 +2,20 @@ package com.events.modules.event.service;
 
 import com.events.common.exception.BadRequestException;
 import com.events.modules.auth.service.auth.IAuthService;
-import com.events.modules.event.dto.CategoryDto;
+import com.events.modules.category.dto.CategoryDto;
+import com.events.modules.category.dto.mapper.ICategoryMapper;
+import com.events.modules.category.entity.Category;
+import com.events.modules.category.service.ICategoryService;
+import com.events.modules.country.dto.CountryDto;
+import com.events.modules.country.dto.mapper.ICountryMapper;
+import com.events.modules.country.entity.Country;
+import com.events.modules.country.enumeration.PaysEnum;
+import com.events.modules.country.service.ICountryService;
 import com.events.modules.event.dto.CreateEventCommandDto;
 import com.events.modules.event.dto.PriceCategoryDto;
-import com.events.modules.event.dto.mapper.ICategoryMapper;
 import com.events.modules.event.dto.mapper.IEventMapper;
 import com.events.modules.event.entity.Event;
 import com.events.modules.event.entity.PriceCategory;
-import com.events.modules.event.entity.aggregate.Category;
 import com.events.modules.event.entity.aggregate.Reservation;
 import com.events.modules.event.enumeration.EventStatusEnum;
 import com.events.modules.event.repository.IEventRepository;
@@ -48,6 +54,12 @@ class EventServiceTest {
     private ICategoryMapper categoryMapper;
 
     @Mock
+    private ICountryService countryService;
+
+    @Mock
+    private ICountryMapper countryMapper;
+
+    @Mock
     private IAuthService authService;
 
     @InjectMocks
@@ -65,9 +77,13 @@ class EventServiceTest {
     private Event event;
     private Category category;
     private CategoryDto categoryDto;
+    private Country country;
+    private CountryDto countryDto;
     private UUID eventId;
     private UUID organizerId;
     private UUID categoryId;
+    private UUID countryId;
+
 
     @BeforeEach
     void setUp() {
@@ -76,6 +92,8 @@ class EventServiceTest {
         organizer.setId(organizerId);
 
         categoryId = UUID.randomUUID();
+        countryId = UUID.randomUUID();
+
         category = Category.builder()
                 .name("Test Category")
                 .description("Test Description")
@@ -89,12 +107,27 @@ class EventServiceTest {
                 LocalDateTime.now()
         );
 
+        country = Country.builder()
+                .name("Test Country")
+                .code("TC")
+                .build();
+
+        countryDto = new CountryDto(
+                countryId,
+                "France",
+                "FR",
+                PaysEnum.FRANCE,
+                LocalDateTime.now(),
+                LocalDateTime.now()
+        );
+
         eventId = UUID.randomUUID();
         event = new Event();
         event.setId(eventId);
         event.setOrganizer(organizer);
         event.setStatus(EventStatusEnum.PUBLISHED);
         event.setCategory(category);
+        event.setCountry(country);
 
         createEventCommandDto = new CreateEventCommandDto(
                 "Test Event",
@@ -115,7 +148,8 @@ class EventServiceTest {
                 false,
                 Collections.emptyList(),
                 Collections.emptyList(),
-                categoryId
+                categoryId,
+                countryId
         );
     }
 
@@ -138,7 +172,7 @@ class EventServiceTest {
 
         @Test
         void shouldCreateEventWithCustomCategories() {
-            PriceCategoryDto priceCategoryDto = new PriceCategoryDto( "CUSTOM", BigDecimal.TEN, 100);
+            PriceCategoryDto priceCategoryDto = new PriceCategoryDto("CUSTOM", BigDecimal.TEN, 100);
             createEventCommandDto = new CreateEventCommandDto(
                     "Test Event",
                     "Test Description",
@@ -158,18 +192,29 @@ class EventServiceTest {
                     false,
                     Collections.emptyList(),
                     List.of(priceCategoryDto),
-                    categoryId
+                    categoryId,
+                    countryId
             );
-            Event event = Event.builder()
+
+            PriceCategory customPriceCategory = PriceCategory.builder()
+                    .name("CUSTOM")
+                    .price(BigDecimal.TEN)
+                    .totalTickets(100)
                     .availableTickets(100)
                     .build();
 
-            event.setPriceCategories(Collections.singleton(PriceCategory.builder().name("CUSTOM").price(BigDecimal.TEN).build()));
+            Event eventToCreate = Event.builder()
+                    .availableTickets(100)
+                    .build();
+            eventToCreate.setPriceCategories(Collections.singleton(customPriceCategory));
 
+            // Mock all required service calls
             when(categoryService.getCategoryById(categoryId)).thenReturn(categoryDto);
             when(categoryMapper.toEntity(categoryDto)).thenReturn(category);
+            when(countryService.getCountryById(countryId)).thenReturn(countryDto);
+            when(countryMapper.toEntity(countryDto)).thenReturn(country);
+            when(eventMapper.toEntity(any(CreateEventCommandDto.class))).thenReturn(eventToCreate);
             when(authService.getCurrentUser()).thenReturn(organizer);
-            when(eventMapper.toEntity(any(CreateEventCommandDto.class))).thenReturn(event);
 
             eventService.createEvent(createEventCommandDto);
 
@@ -179,6 +224,9 @@ class EventServiceTest {
             Event savedEvent = eventCaptor.getValue();
             assertEquals(1, savedEvent.getPriceCategories().size());
             assertEquals("CUSTOM", savedEvent.getPriceCategories().iterator().next().getName());
+            assertEquals(category, savedEvent.getCategory());
+            assertEquals(country, savedEvent.getCountry());
+            assertEquals(organizer, savedEvent.getOrganizer());
         }
 
         @Test
@@ -202,7 +250,8 @@ class EventServiceTest {
                     false,
                     Collections.emptyList(),
                     Collections.emptyList(),
-                    categoryId
+                    categoryId,
+                    countryId
             );
 
             assertThrows(BadRequestException.class, () -> eventService.createEvent(createEventCommandDto));
@@ -229,7 +278,8 @@ class EventServiceTest {
                     false,
                     Collections.emptyList(),
                     Collections.emptyList(),
-                    categoryId
+                    categoryId,
+                    countryId
             );
 
             assertThrows(BadRequestException.class, () -> eventService.createEvent(createEventCommandDto));
