@@ -1,0 +1,17 @@
+meta {
+  name: CreateCountry
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{host}}/countries
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "paysEnum": "TOGO"
+  }
+}

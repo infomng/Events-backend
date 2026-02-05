@@ -1,0 +1,25 @@
+meta {
+  name: UpdateCountry
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{host}}/api/v1/countries/{{countryId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+body:json {
+  {
+    "paysEnum": "GERMANY"
+  }
+}
+
+vars:pre-request {
+  countryId: REPLACE_WITH_COUNTRY_ID
+}

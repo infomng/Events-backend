@@ -1,0 +1,19 @@
+meta {
+  name: DeleteCountry
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{host}}/api/v1/countries/{{countryId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+vars:pre-request {
+  countryId: REPLACE_WITH_COUNTRY_ID
+}
