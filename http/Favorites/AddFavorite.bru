@@ -1,0 +1,19 @@
+meta {
+  name: Add Event to Favorites
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/favorites/events/{{eventId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+vars:pre-request {
+  eventId: 
+}

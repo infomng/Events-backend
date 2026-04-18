@@ -1,0 +1,19 @@
+meta {
+  name: Remove Event from Favorites
+  type: http
+  seq: 2
+}
+
+delete {
+  url: {{host}}/favorites/eventsa1177000-9fa6-4070-aafe-2ff1b2854892
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+vars:pre-request {
+  eventId: 
+}

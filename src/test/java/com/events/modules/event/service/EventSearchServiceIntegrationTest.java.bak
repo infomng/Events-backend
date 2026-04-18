@@ -1,0 +1,274 @@
+package com.events.modules.event.service;
+
+import com.events.modules.category.entity.Category;
+import com.events.modules.category.repository.ICategoryRepository;
+import com.events.modules.country.entity.Country;
+import com.events.modules.country.enumeration.PaysEnum;
+import com.events.modules.country.repository.ICountryRepository;
+import com.events.modules.event.dto.EventSearchCriteriaDto;
+import com.events.modules.event.dto.EventSearchViewDto;
+import com.events.modules.event.entity.Event;
+import com.events.modules.event.entity.PriceCategory;
+import com.events.modules.event.enumeration.EventStatusEnum;
+import com.events.modules.event.repository.IEventRepository;
+import com.events.modules.user.entity.User;
+import com.events.modules.user.repository.IUserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+class EventSearchServiceIntegrationTest {
+
+    @Autowired
+    private IEventService eventService;
+
+    @Autowired
+    private IEventRepository eventRepository;
+
+    @Autowired
+    private ICategoryRepository categoryRepository;
+
+    @Autowired
+    private ICountryRepository countryRepository;
+
+    @Autowired
+    private IUserRepository userRepository;
+
+    private Category category;
+    private Country country;
+    private User organizer;
+
+    @BeforeEach
+    void setUp() {
+        // Create test data - @Transactional will rollback after each test
+        category = Category.builder()
+                .name("Music")
+                .description("Music events")
+                .build();
+        category = categoryRepository.save(category);
+
+        country = Country.builder()
+                .name("France")
+                .code("FR")
+                .paysEnum(PaysEnum.FRANCE)
+                .build();
+        country = countryRepository.save(country);
+
+        organizer = new User();
+        organizer.setFullName("John Doe");
+        organizer.setEmail("john@example.com");
+        organizer = userRepository.save(organizer);
+
+        // Create test events
+        createTestEvent("Event 1", EventStatusEnum.PUBLISHED, true, 10, LocalDateTime.now().plusDays(5));
+        createTestEvent("Event 2", EventStatusEnum.PUBLISHED, true, 0, LocalDateTime.now().plusDays(10));
+        createTestEvent("Event 3", EventStatusEnum.DRAFT, true, 20, LocalDateTime.now().plusDays(15));
+        createTestEvent("Event 4", EventStatusEnum.PUBLISHED, false, 15, LocalDateTime.now().plusDays(20));
+    }
+
+    @Test
+    void searchEvents_WithPublishedAndPublicCriteria_ShouldReturnMatchingEvents() {
+        EventSearchCriteriaDto criteria = new EventSearchCriteriaDto(
+                true, // isPublic
+                EventStatusEnum.PUBLISHED,
+                null, null, null, null, null, null,
+                null, null, null, null, null,
+                null, null, null, null
+        );
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("startDate").ascending());
+        Page<EventSearchViewDto> results = eventService.searchEvents(criteria, pageable);
+
+        assertNotNull(results);
+        assertEquals(2, results.getTotalElements());
+        assertEquals("Event 1", results.getContent().get(0).name());
+    }
+
+    @Test
+    void searchEvents_WithAvailableTicketsCriteria_ShouldReturnOnlyEventsWithTickets() {
+        EventSearchCriteriaDto criteria = new EventSearchCriteriaDto(
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null,
+                null, null, null, true // hasAvailableTickets
+        );
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<EventSearchViewDto> results = eventService.searchEvents(criteria, pageable);
+
+        assertNotNull(results);
+        assertTrue(results.getTotalElements() >= 2);
+        assertTrue(results.getContent().stream().allMatch(e -> e.availableTickets() > 0));
+    }
+
+    @Test
+    void searchEvents_WithUpcomingOnlyCriteria_ShouldReturnFutureEvents() {
+        EventSearchCriteriaDto criteria = new EventSearchCriteriaDto(
+                null, null, null, null, null, null, null,
+                true, // upcomingOnly
+                null, null, null, null, null,
+                null, null, null, null
+        );
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<EventSearchViewDto> results = eventService.searchEvents(criteria, pageable);
+
+        assertNotNull(results);
+        assertTrue(results.getTotalElements() > 0);
+        assertTrue(results.getContent().stream()
+                .allMatch(e -> e.startDate().isAfter(LocalDateTime.now())));
+    }
+
+    @Test
+    void searchEvents_WithCategoryCriteria_ShouldReturnEventsInCategory() {
+        EventSearchCriteriaDto criteria = new EventSearchCriteriaDto(
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null,
+                category.getId(), // categoryId
+                null, null, null
+        );
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<EventSearchViewDto> results = eventService.searchEvents(criteria, pageable);
+
+        assertNotNull(results);
+        assertTrue(results.getTotalElements() > 0);
+        assertTrue(results.getContent().stream()
+                .allMatch(e -> e.category().id().equals(category.getId())));
+    }
+
+    @Test
+    void searchEvents_WithCountryCriteria_ShouldReturnEventsInCountry() {
+        EventSearchCriteriaDto criteria = new EventSearchCriteriaDto(
+                null, null, null, null, null, null, null, null,
+                country.getId(), // countryId
+                null, null, null, null,
+                null, null, null, null
+        );
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<EventSearchViewDto> results = eventService.searchEvents(criteria, pageable);
+
+        assertNotNull(results);
+        assertTrue(results.getTotalElements() > 0);
+        assertTrue(results.getContent().stream()
+                .allMatch(e -> e.country().id().equals(country.getId())));
+    }
+
+    @Test
+    void searchEvents_WithPagination_ShouldReturnCorrectPage() {
+        EventSearchCriteriaDto criteria = new EventSearchCriteriaDto(
+                null, null, null, null, null, null, null, null,
+                null, null, null, null, null,
+                null, null, null, null
+        );
+
+        Pageable pageable = PageRequest.of(0, 2);
+        Page<EventSearchViewDto> results = eventService.searchEvents(criteria, pageable);
+
+        assertNotNull(results);
+        assertEquals(2, results.getContent().size());
+        assertTrue(results.getTotalElements() >= 4);
+    }
+
+    @Test
+    void searchEvents_WithSortByStartDate_ShouldReturnSortedResults() {
+        EventSearchCriteriaDto criteria = new EventSearchCriteriaDto(
+                true, EventStatusEnum.PUBLISHED, null, null, null, null, null, null,
+                null, null, null, null, null,
+                null, null, null, null
+        );
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("startDate").ascending());
+        Page<EventSearchViewDto> results = eventService.searchEvents(criteria, pageable);
+
+        assertNotNull(results);
+        assertTrue(results.getContent().size() >= 2);
+
+        LocalDateTime previousDate = null;
+        for (EventSearchViewDto event : results.getContent()) {
+            if (previousDate != null) {
+                assertTrue(event.startDate().isAfter(previousDate) ||
+                        event.startDate().isEqual(previousDate));
+            }
+            previousDate = event.startDate();
+        }
+    }
+
+    @Test
+    void searchEvents_WithMultipleCriteria_ShouldApplyAllFilters() {
+        EventSearchCriteriaDto criteria = new EventSearchCriteriaDto(
+                true, // isPublic
+                EventStatusEnum.PUBLISHED,
+                null, null, null, null, null, null,
+                country.getId(), // countryId
+                null, null, null, null,
+                category.getId(), // categoryId
+                null, null,
+                true // hasAvailableTickets
+        );
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<EventSearchViewDto> results = eventService.searchEvents(criteria, pageable);
+
+        assertNotNull(results);
+        assertTrue(results.getContent().stream().allMatch(e ->
+                e.isPublic() &&
+                        e.status() == EventStatusEnum.PUBLISHED &&
+                        e.country().id().equals(country.getId()) &&
+                        e.category().id().equals(category.getId()) &&
+                        e.availableTickets() > 0
+        ));
+    }
+
+    private void createTestEvent(String name, EventStatusEnum status, boolean isPublic,
+                                  int availableTickets, LocalDateTime startDate) {
+        Event event = Event.builder()
+                .name(name)
+                .description("Description for " + name)
+                .isPublic(isPublic)
+                .status(status)
+                .location("Paris, France")
+                .latitude(48.8566)
+                .longitude(2.3522)
+                .startDate(startDate)
+                .endDate(startDate.plusHours(3))
+                .ticketSalesStartDate(LocalDateTime.now().minusDays(1))
+                .ticketSalesEndDate(startDate.minusDays(1))
+                .hasSeats(false)
+                .hasInvitationCode(false)
+                .isTicketSalesActive(true)
+                .category(category)
+                .country(country)
+                .organizer(organizer)
+                .build();
+
+        // Create a price category to set available tickets
+        // Event.compute() recalculates availableTickets from priceCategories
+        if (availableTickets > 0) {
+            PriceCategory priceCategory = PriceCategory.builder()
+                            .name("STANDARD")
+                            .price(java.math.BigDecimal.valueOf(10.0))
+                            .totalTickets(availableTickets)
+                            .availableTickets(availableTickets)
+                            .event(event)
+                            .build();
+            event.setPriceCategories(java.util.Set.of(priceCategory));
+        }
+
+        eventRepository.save(event);
+    }
+}
