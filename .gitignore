@@ -13,7 +13,7 @@ Events-backend/.mvn/wrapper/maven-wrapper.jar
 .springBeans
 .sts4-cache
 
-application.properties
+!**/resources/application.properties
 
 ### IntelliJ IDEA ###
 .idea
