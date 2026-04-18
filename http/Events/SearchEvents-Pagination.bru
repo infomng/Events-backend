@@ -1,0 +1,21 @@
+meta {
+  name: SearchEvents-Pagination
+  type: http
+  seq: 17
+}
+
+get {
+  url: {{host}}/events?isPublic=true&status=PUBLISHED&isFeatured=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  isPublic: true
+  status: PUBLISHED
+  isFeatured: true
+  ~page: 0
+  ~size: 10
+  ~sortBy: createdAt
+  ~sortDirection: DESC
+}

@@ -1,0 +1,18 @@
+meta {
+  name: SearchEvents-Basic
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{host}}/events/search?page=0&size=20&sortBy=startDate&sortDirection=ASC
+  body: none
+  auth: inherit
+}
+
+params:query {
+  page: 0
+  size: 20
+  sortBy: startDate
+  sortDirection: ASC
+}
