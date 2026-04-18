@@ -2,6 +2,10 @@ package com.events.common.utils.contants;
 
     public final class Constants {
 
+        // Favorites
+        public static final String FAVORITE_ALREADY_EXISTS = "Favorite already exist";
+        public static final String FAVORITE_NOT_FOUND = "Favorite not found";
+
         // Events
         public static final String EVENTS_NOT_FOUND = "Event not found";
         public static final String ONLY_EVENTS_WITH_DRAFT_STATUS_CAN_BE_PUBLISHED = "Only events with DRAFT status can be published.";
@@ -26,8 +30,8 @@ package com.events.common.utils.contants;
 
         // Authentication / Authorization
         public static final String TOKEN = "token";
-        public static final String ACCESS_TOKEN = "access_token";
-        public static final String REFRESH_TOKEN = "refresh_token";
+        public static final String ACCESS_TOKEN = "accessToken";
+        public static final String REFRESH_TOKEN = "refreshToken";
         public static final Long REFRESH_TOKEN_MIN_DURATION = 604800000L;
         public static final String ROLES = "roles";
         public static final String ROLE = "role";

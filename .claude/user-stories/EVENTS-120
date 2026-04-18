@@ -1,0 +1,230 @@
+# Claude CLI – Implémentation de la recherche dynamique d’événements
+
+## 🎯 Objectif
+
+Implémenter une **recherche dynamique multi-critères performante** pour l’entité `Event` dans un backend **Spring Boot / JPA / Hibernate**, **sans moteur de recherche externe** (pas d’Elasticsearch).
+
+La solution doit s’appuyer sur :
+- JPA Specifications (Criteria API)
+- Index SQL
+- Projections
+- Pagination
+- Cache Spring
+
+---
+
+## 📌 Contexte projet
+
+Le projet *Events* dispose d’une entité `Event` riche (dates, statut, visibilité, localisation, billetterie, catégorie, pays, organisateur).
+
+⚠️ Contraintes importantes :
+- Les relations `@ManyToMany` et `@OneToMany` sont **LAZY**
+- Elles ne doivent **jamais être chargées** dans la recherche
+- L’entité `Event` ne doit pas être modifiée fonctionnellement
+
+---
+
+## 🌐 Endpoint à implémenter
+
+```
+GET /events/search
+```
+
+### Règles
+- Controller **fin**
+- Toute la logique de recherche dans un **service dédié**
+- Les paramètres doivent être regroupés dans un **DTO de critères**
+
+---
+
+## 🔍 Critères de recherche (tous optionnels et combinables)
+
+### Visibilité & état
+- `isPublic = true`
+- `status = PUBLISHED`
+- `isTicketSalesActive = true`
+
+---
+
+### Dates
+- événements à venir (`startDate >= now`)
+- plage de dates :
+  - `startDate >= from`
+  - `endDate <= to`
+
+---
+
+### Localisation
+- pays (`country.id`)
+- lieu (`location`)
+- recherche géographique simple :
+  - latitude
+  - longitude
+  - rayon
+  - implémentation via **bounding box** (pas de PostGIS)
+
+---
+
+### Catégorisation
+- catégorie (`category.id`)
+- organisateur (`organizer.id`)
+
+---
+
+### Billetterie
+- événements avec billets disponibles :
+  - `hasSeats = true`
+  - `availableTickets > 0`
+
+---
+
+## ↕️ Tri & pagination
+
+- Tri par défaut : `startDate ASC`
+- Autres tris possibles :
+  - `createdAt DESC`
+- Pagination obligatoire
+- Taille maximale configurable (ex : 20 ou 50)
+- Toujours un `ORDER BY`
+
+---
+
+## 🧩 Exigences techniques strictes
+
+### Repository
+- Utiliser `JpaSpecificationExecutor<Event>`
+- Aucune requête JPQL écrite à la main
+- Une **Specification par critère**
+- Chaque Specification :
+  - est pure
+  - ne contient aucune logique métier
+  - retourne `null` si le critère est absent
+
+---
+
+## 🧠 Specifications attendues
+
+Implémenter au minimum :
+- `isPublished()`
+- `isPublic()`
+- `startsAfter(LocalDateTime from)`
+- `endsBefore(LocalDateTime to)`
+- `hasCountry(UUID countryId)`
+- `hasCategory(UUID categoryId)`
+- `hasOrganizer(UUID organizerId)`
+- `hasAvailableTickets()`
+- `withinGeoBoundingBox(double lat, double lng, double radiusKm)`
+
+Les Specifications doivent être assemblées dynamiquement dans le service.
+
+---
+
+## 📦 Projection OBLIGATOIRE (Search View)
+
+La recherche **ne doit jamais retourner l’entité `Event` complète**.
+
+Créer une projection dédiée, par exemple :
+
+```
+EventSearchView
+- UUID id
+- String name
+- LocalDateTime startDate
+- LocalDateTime endDate
+- String location
+- Double latitude
+- Double longitude
+- Boolean hasSeats
+- Integer availableTickets
+- CategorySummary (id, name)
+- CountrySummary (id, name)
+```
+
+---
+
+## 🗄️ Base de données & index
+
+Proposer et documenter les index SQL nécessaires, notamment :
+- `(status, is_public, start_date)`
+- `(category_id)`
+- `(country_id)`
+- `(organizer_id)`
+- `(has_seats, available_tickets)`
+- `(latitude, longitude)`
+
+Les index doivent être :
+- alignés avec les clauses `WHERE`
+- cohérents avec le `ORDER BY`
+- validés via `EXPLAIN ANALYZE`
+
+---
+
+## ⚡ Cache
+
+### Règles
+- Cacher uniquement les **résultats de recherche**
+- Ne jamais cacher les entités
+- Cache limité à :
+  - recherches publiques
+  - page 0 uniquement
+  - combinaisons simples de filtres
+
+### Implémentation
+- Cache Spring (`@Cacheable`)
+- TTL court (5 à 10 minutes)
+- Invalidation globale lors de :
+  - publication d’un événement
+  - modification des dates
+  - modification de la billetterie
+
+---
+
+## 🧪 Tests attendus
+
+### Tests unitaires
+- 1 test = 1 Specification
+- chaque filtre doit être testé isolément
+
+### Tests d’intégration
+- combinaison de plusieurs filtres
+- pagination + tri
+
+---
+
+## 🚫 Interdictions
+
+- Pas de `fetch = EAGER`
+- Pas de `LIKE %xxx%`
+- Pas de logique métier dans les Specifications
+- Pas de chargement des relations :
+  - `attendees`
+  - `staff`
+  - `seats`
+  - `images`
+- Pas de requêtes JPQL hardcodées
+
+---
+
+## ✅ Livrables attendus
+
+- DTO de critères de recherche
+- Classe `EventSpecifications`
+- Service de recherche dédié
+- Repository adapté
+- Projection de recherche
+- Endpoint REST `/events/search`
+- Index SQL documentés
+- Cache configuré
+- Tests unitaires et tests d’intégration
+
+---
+
+## 🧠 Attentes qualité
+
+Le code doit être :
+- lisible
+- bien découpé
+- testable
+- performant
+- prêt pour une montée en charge
+- facilement extensible vers Elasticsearch à l’avenir

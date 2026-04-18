@@ -38,8 +38,8 @@ create_milestone () {
   TITLE="$1"
   DESC="$2"
   # Vérifie si le milestone existe déjà
-  if ! gh api repos/$OWNER_REPO/milestones --jq '.[].title' | grep -q "^$TITLE$"; then
-    gh api --method POST repos/$OWNER_REPO/milestones -f title="$TITLE" -f description="$DESC" > /dev/null
+  if ! gh api repos/$OWNER_REPO/milestones --jq '.[].name' | grep -q "^$TITLE$"; then
+    gh api --method POST repos/$OWNER_REPO/milestones -f name="$TITLE" -f description="$DESC" > /dev/null
     echo " ✅ Milestone créé: $TITLE"
   else
     echo " ⏩ Milestone existant: $TITLE"
@@ -53,11 +53,11 @@ create_issue () {
   BODY="$4"
 
   # Idempotence : ne recrée pas si issue existe déjà
-  if gh issue list --search "$TITLE" --json title --jq '.[] | .title' | grep -q "^$TITLE$"; then
+  if gh issue list --search "$TITLE" --json name --jq '.[] | .name' | grep -q "^$TITLE$"; then
     echo " ⏩ Issue déjà existante: $TITLE"
   else
     gh issue create \
-      --title "$TITLE" \
+      --name "$TITLE" \
       --body "$BODY
 
 ---

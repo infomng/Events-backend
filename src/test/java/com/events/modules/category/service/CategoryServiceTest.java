@@ -58,9 +58,7 @@ class CategoryServiceTest {
         categoryDto = new CategoryDto(
                 categoryId,
                 "Music",
-                "Music events",
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                "Music events"
         );
 
         createCommandDto = new CategoryCreateCommandDto("Music", "Music events");

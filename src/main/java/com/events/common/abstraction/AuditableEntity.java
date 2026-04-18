@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @SuperBuilder
-public abstract class AuditableEntity extends BaseEntity{
+public abstract class AuditableEntity extends BaseEntity {
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

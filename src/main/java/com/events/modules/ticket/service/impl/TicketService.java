@@ -1,9 +1,8 @@
 package com.events.modules.ticket.service.impl;
 
-import com.events.common.exception.BadRequestException;
 import com.events.modules.booking.entity.Booking;
 import com.events.modules.event.entity.aggregate.BookingSeat;
-import com.events.modules.event.dto.EventDto;
+import com.events.modules.event.dto.GetEventDto;
 import com.events.modules.event.service.IEventService;
 import com.events.modules.qrcode.service.IQrCodeService;
 import com.events.modules.ticket.dto.TicketDto;
@@ -34,7 +33,7 @@ public class TicketService implements ITicketService {
     @Override
     public List<TicketDto> generateTicketsForBooking(Booking booking) {
         User user = userService.findById(booking.getUserId());
-        EventDto event = eventService.getEventById(booking.getEventId());
+        GetEventDto event = eventService.getEventById(booking.getEventId());
 
         return booking.getBookingSeats().stream()
                 .map(bookingSeat -> createTicket(event, user, bookingSeat))
@@ -56,7 +55,7 @@ public class TicketService implements ITicketService {
                 .collect(Collectors.toList());
     }
 
-    private Ticket createTicket(EventDto event, User user, BookingSeat bookingSeat) {
+    private Ticket createTicket(GetEventDto event, User user, BookingSeat bookingSeat) {
         String ticketCode = UUID.randomUUID().toString();
         String qrContent = "Ticket Code: " + ticketCode + "\nEvent: " + event.name() + "\nUser: " + user.getFullName();
         byte[] qrCode = qrCodeService.generateQrCode(qrContent, 250, 250);

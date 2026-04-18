@@ -56,6 +56,15 @@ public class User extends AuditableEntity {
     @ManyToMany(mappedBy = "staff", fetch = FetchType.LAZY)
     private Set<Event> eventsStaffing;
 
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "USER_FAVORITE_EVENTS",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "event_id")
+    )
+    private Set<Event> favoriteEvents = new HashSet<>();
+
     @Enumerated(EnumType.STRING)
     private RoleEnum role;
 

@@ -1,5 +1,6 @@
 package com.events.modules.auth.service.jwt;
 
+import com.events.modules.auth.dto.AccessTokenDto;
 import com.events.modules.user.entity.User;
 import io.jsonwebtoken.Claims;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -7,7 +8,7 @@ import java.util.function.Function;
 
 public interface IJwtService {
 
-    String generateAccessToken(User user);
+    AccessTokenDto generateAccessToken(User user);
 
     String generateRefreshToken(User user);
 

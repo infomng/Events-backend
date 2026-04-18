@@ -1,6 +1,7 @@
-package com.events.modules.event.entity;
+package com.events.modules.event.entity.aggregate;
 
 import com.events.common.abstraction.AuditableEntity;
+import com.events.modules.event.entity.Event;
 import com.events.modules.event.enumeration.DefaultPriceCategoryEnum;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,6 +29,9 @@ public class PriceCategory extends AuditableEntity {
 
     @Column(nullable = false)
     private Integer availableTickets;
+
+    @Column(nullable = false)
+    private Integer soldTickets;
 
     @Column(nullable = false)
     private Integer totalTickets;

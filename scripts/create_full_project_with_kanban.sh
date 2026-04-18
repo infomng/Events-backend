@@ -39,8 +39,8 @@ create_label () {
 create_milestone () {
   TITLE="$1"
   DESC="$2"
-  if ! gh api repos/$OWNER_REPO/milestones --jq '.[].title' | grep -q "^$TITLE$"; then
-    gh api --method POST repos/$OWNER_REPO/milestones -f title="$TITLE" -f description="$DESC" > /dev/null
+  if ! gh api repos/$OWNER_REPO/milestones --jq '.[].name' | grep -q "^$TITLE$"; then
+    gh api --method POST repos/$OWNER_REPO/milestones -f name="$TITLE" -f description="$DESC" > /dev/null
     echo " ✅ Milestone créé: $TITLE"
   else
     echo " ⏩ Milestone existant: $TITLE"
@@ -91,15 +91,15 @@ done
 PROJECT_ID=$(gh api graphql -f query='
 query($owner: String!, $name: String!) {
   repository(owner:$owner, name:$name) {
-    projectsV2(first: 100) { nodes { id title } }
+    projectsV2(first: 100) { nodes { id name } }
   }
-}' -F owner="${OWNER_REPO%%/*}" -F name="${OWNER_REPO##*/}" | jq -r --arg PN "$PROJECT_NAME" '.data.repository.projectsV2.nodes[] | select(.title==$PN) | .id')
+}' -F owner="${OWNER_REPO%%/*}" -F name="${OWNER_REPO##*/}" | jq -r --arg PN "$PROJECT_NAME" '.data.repository.projectsV2.nodes[] | select(.name==$PN) | .id')
 
 if [ -z "$PROJECT_ID" ]; then
   REPO_ID=$(gh api graphql -f query='query($owner:String!,$name:String!){repository(owner:$owner,name:$name){id}}' \
             -F owner="${OWNER_REPO%%/*}" -F name="${OWNER_REPO##*/}" | jq -r '.data.repository.id')
-  PROJECT_ID=$(gh api graphql -f query='mutation($repoId:ID!,$title:String!){createProjectV2(input:{repositoryId:$repoId,title:$title}){projectV2{id}}}' \
-            -F repoId="$REPO_ID" -F title="$PROJECT_NAME" | jq -r '.data.createProjectV2.projectV2.id')
+  PROJECT_ID=$(gh api graphql -f query='mutation($repoId:ID!,$name:String!){createProjectV2(input:{repositoryId:$repoId,name:$name}){projectV2{id}}}' \
+            -F repoId="$REPO_ID" -F name="$PROJECT_NAME" | jq -r '.data.createProjectV2.projectV2.id')
   echo " ✅ Project V2 créé: $PROJECT_NAME"
 else
   echo " ⏩ Project V2 existant: $PROJECT_NAME"
@@ -131,9 +131,9 @@ create_issue () {
   MILESTONE="$3"
   BODY="$4"
 
-  ISSUE_NUMBER=$(gh issue list --search "$TITLE" --json number,title --jq '.[] | select(.title=="'"$TITLE"'") | .number')
+  ISSUE_NUMBER=$(gh issue list --search "$TITLE" --json number,name --jq '.[] | select(.name=="'"$TITLE"'") | .number')
   if [ -z "$ISSUE_NUMBER" ]; then
-    ISSUE_NUMBER=$(gh issue create --title "$TITLE" --body "$BODY
+    ISSUE_NUMBER=$(gh issue create --name "$TITLE" --body "$BODY
 
 ---
 

@@ -45,9 +45,7 @@ public class CountryControllerTest extends ControllerTestContext {
                 countryId,
                 "France",
                 "FR",
-                PaysEnum.FRANCE,
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                PaysEnum.FRANCE
         );
     }
 
@@ -158,9 +156,7 @@ public class CountryControllerTest extends ControllerTestContext {
                 countryId,
                 "Germany",
                 "DE",
-                PaysEnum.GERMANY,
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                PaysEnum.GERMANY
         );
         when(countryService.updateCountry(eq(countryId), any(CountryUpdateCommandDto.class)))
                 .thenReturn(updatedDto);

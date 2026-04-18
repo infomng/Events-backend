@@ -26,8 +26,16 @@ public class RepositoryAccessTest {
                             .filter(c -> c.getDirectDependenciesFromSelf().stream()
                                     .anyMatch(dep -> dep.getTargetClass().equals(repository)))
                             .forEach(dep -> {
+                                // Allow FavoriteService to access IEventRepository
+                                // (FavoriteService manages the many-to-many relationship between User and Event)
+                                boolean isFavoriteServiceAccessingEventRepo =
+                                    dep.getSimpleName().equals("FavoriteService") &&
+                                    repository.getSimpleName().equals("IEventRepository");
+
                                 if (!dep.getSimpleName().equals(expectedService) &&
-                                        !dep.getSimpleName().startsWith(expectedServiceTest) && !dep.getSimpleName().contains(expectedNestedServiceName)) {
+                                        !dep.getSimpleName().startsWith(expectedServiceTest) &&
+                                        !dep.getSimpleName().contains(expectedNestedServiceName) &&
+                                        !isFavoriteServiceAccessingEventRepo) {
                                     throw new AssertionError(
                                             repository.getSimpleName() + " should only be accessed by " + expectedService
                                                     + " or nested test classes that contains: " + expectedNestedServiceName

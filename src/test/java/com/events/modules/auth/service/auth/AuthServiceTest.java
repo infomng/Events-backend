@@ -3,13 +3,10 @@ package com.events.modules.auth.service.auth;
 import com.events.common.exception.BadRequestException;
 import com.events.common.utils.contants.Constants;
 import com.events.common.utils.string.StringUtils;
-import com.events.modules.auth.dto.ForgotPasswordRequestDto;
-import com.events.modules.auth.dto.LoginRequestDto;
-import com.events.modules.auth.dto.RegisterCommandDto;
-import com.events.modules.auth.dto.ResetPasswordRequestDto;
+import com.events.modules.auth.dto.*;
 import com.events.modules.auth.exception.EmailAlreadyExistException;
 import com.events.modules.auth.service.jwt.IJwtService;
-import com.events.modules.auth.service.mail.IMailService;
+import com.events.common.mail.IMailService;
 import com.events.modules.user.dto.mapper.IUserMapper;
 import com.events.modules.user.entity.User;
 import com.events.modules.user.service.IUserService;
@@ -202,13 +199,13 @@ class AuthServiceTest {
         User user = new User();
         user.setEmail(loginRequest.email());
         when(userService.findByEmail(loginRequest.email())).thenReturn(user);
-        when(jwtService.generateAccessToken(user)).thenReturn(Constants.ACCESS_TOKEN);
+        when(jwtService.generateAccessToken(user)).thenReturn(new AccessTokenDto(Constants.ACCESS_TOKEN));
 
         // When
         var result = authService.login(loginRequest);
 
         // Then
-        assertEquals(Constants.ACCESS_TOKEN, result.access_token());
+        assertEquals(Constants.ACCESS_TOKEN, result.accessToken());
         verify(authenticationManager, times(1)).authenticate(any());
     }
 

@@ -2,15 +2,16 @@ package com.events.modules.event.controller;
 
 
 import com.events.common.result.Result;
-import com.events.modules.event.dto.CreateEventCommandDto;
-import com.events.modules.event.dto.EventDto;
-import com.events.modules.event.dto.GenerateSeatDto;
-import com.events.modules.event.dto.UpdateEventCommandDto;
+import com.events.modules.event.dto.*;
 import com.events.modules.event.service.IEventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,13 +33,7 @@ public class EventController {
         return ResponseEntity.ok(Result.success(eventService.getDefaultPriceCategories()));
     }
 
-
-    @GetMapping("countries")
-    public ResponseEntity<Result<List<String>>> getCountries() {
-        return ResponseEntity.ok(Result.success(eventService.getCountries()));
-    }
-
-    @PostMapping()
+    @PostMapping
     public ResponseEntity<Result<UUID>> create(@Valid @RequestBody CreateEventCommandDto command) {
         return ResponseEntity.ok(Result.success(eventService.createEvent(command)));
     }
@@ -54,8 +49,9 @@ public class EventController {
         return ResponseEntity.ok(Result.success());
     }
 
-    @GetMapping
-    public ResponseEntity<Result<Page<EventDto>>> getAll(
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Result<Page<GetEventDto>>> getAll(
                                  @RequestParam(defaultValue = "0") int page,
                                  @RequestParam(defaultValue = "10") int size,
                                  @RequestParam(defaultValue = "DESC", required = false) String sort,
@@ -64,12 +60,12 @@ public class EventController {
     }
 
     @GetMapping("/{id}")
-    public EventDto getById(@PathVariable UUID id) {
+    public GetEventDto getById(@PathVariable UUID id) {
         return eventService.getEventById(id);
     }
 
     @GetMapping("/nearby")
-    public List<EventDto> getNearby(
+    public List<GetEventDto> getNearby(
             @RequestParam Double lat,
             @RequestParam Double lon,
             @RequestParam(defaultValue = "5000") Double radius // 5 km par défaut
@@ -84,7 +80,7 @@ public class EventController {
     }
 
     @GetMapping("/incoming")
-    public List<EventDto> getAllIncomingEvents() {
+    public List<GetEventDto> getAllIncomingEvents() {
         return eventService.getAllIncomingEvents();
     }
 
@@ -104,5 +100,58 @@ public class EventController {
     public ResponseEntity<Result<Void>> publishEvent(@PathVariable UUID id) {
         eventService.publishEvent(id);
         return ResponseEntity.ok(Result.success());
+    }
+
+    @GetMapping
+    public ResponseEntity<Result<Page<GetEventDto>>> getEvents(
+            @RequestParam(required = false) Boolean isFeatured,
+            @RequestParam(required = false) Boolean isPublic,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Boolean isTicketSalesActive,
+            @RequestParam(required = false) String startDateFrom,
+            @RequestParam(required = false) String startDateTo,
+            @RequestParam(required = false) String endDateFrom,
+            @RequestParam(required = false) String endDateTo,
+            @RequestParam(required = false) Boolean upcomingOnly,
+            @RequestParam(required = false) UUID countryId,
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude,
+            @RequestParam(required = false) Double radiusKm,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) UUID organizerId,
+            @RequestParam(required = false) Boolean hasSeats,
+            @RequestParam(required = false) Boolean hasAvailableTickets,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "startDate") String sortBy,
+            @RequestParam(defaultValue = "ASC") String sortDirection
+    ) {
+        EventSearchCriteriaDto criteria = new EventSearchCriteriaDto(
+                isFeatured,
+                isPublic,
+                status != null ? com.events.modules.event.enumeration.EventStatusEnum.valueOf(status) : null,
+                isTicketSalesActive,
+                startDateFrom != null ? java.time.LocalDateTime.parse(startDateFrom) : null,
+                startDateTo != null ? java.time.LocalDateTime.parse(startDateTo) : null,
+                endDateFrom != null ? java.time.LocalDateTime.parse(endDateFrom) : null,
+                endDateTo != null ? java.time.LocalDateTime.parse(endDateTo) : null,
+                upcomingOnly,
+                countryId,
+                location,
+                latitude,
+                longitude,
+                radiusKm,
+                categoryId,
+                organizerId,
+                hasSeats,
+                hasAvailableTickets
+        );
+
+        Sort sort = Sort.by(Sort.Direction.fromString(sortDirection), sortBy);
+        Pageable pageable = PageRequest.of(page, Math.min(size, 50), sort);
+
+        Page<GetEventDto> results = eventService.getEvents(criteria, pageable);
+        return ResponseEntity.ok(Result.success(results));
     }
 }

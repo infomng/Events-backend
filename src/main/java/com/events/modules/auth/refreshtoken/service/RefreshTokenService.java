@@ -1,24 +1,21 @@
 package com.events.modules.auth.refreshtoken.service;
 
 import com.events.common.config.properties.JwtProperties;
-import com.events.common.utils.contants.Constants;
 import com.events.modules.auth.dto.AccessTokenDto;
 import com.events.modules.auth.exception.InvalidRefreshTokenException;
 import com.events.modules.auth.refreshtoken.Entity.RefreshToken;
-import com.events.modules.auth.refreshtoken.dto.RefreshTokenResponseDto;
+import com.events.modules.auth.refreshtoken.dto.RefreshTokenDto;
 import com.events.modules.auth.refreshtoken.dto.mapper.RefreshTokenMapper;
 import com.events.modules.auth.refreshtoken.repository.IRefreshTokenRepository;
+import com.events.modules.auth.service.auth.IAuthService;
 import com.events.modules.auth.service.jwt.IJwtService;
 import com.events.modules.user.entity.User;
 import com.events.modules.user.service.IUserService;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Arrays;
 
 @Service
 @Transactional
@@ -31,7 +28,7 @@ public class RefreshTokenService implements IRefreshTokenService {
     private final JwtProperties jwtProperties;
 
     @Override
-    public RefreshTokenResponseDto createRefreshToken(String email) {
+    public RefreshTokenDto createRefreshToken(String email) {
         User user = userService.findByEmail(email);
 
         RefreshToken token = RefreshToken.builder()
@@ -46,22 +43,16 @@ public class RefreshTokenService implements IRefreshTokenService {
     }
 
     @Override
-    public AccessTokenDto getAccessToken(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-       if (cookies == null) {
-           throw new InvalidRefreshTokenException();
-       }
-
-        String refreshToken = Arrays.stream(cookies)
-                .filter(cookie -> Constants.REFRESH_TOKEN.equals(cookie.getName()))
-                .findFirst()
-                .map(Cookie::getValue)
-                .orElse(null);
-
+    public AccessTokenDto getAccessToken(String refreshToken) {
         RefreshToken token = verifyRefreshToken(refreshToken);
 
         User user = token.getUser();
-        return new AccessTokenDto(jwtService.generateAccessToken(user));
+        return jwtService.generateAccessToken(user);
+    }
+
+    @Override
+    public void deleteRefreshToken(String refreshToken) {
+        refreshTokenRepository.deleteByToken(refreshToken);
     }
 
     private RefreshToken verifyRefreshToken(String token) {
