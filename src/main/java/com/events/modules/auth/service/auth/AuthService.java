@@ -13,7 +13,7 @@ import com.events.modules.user.dto.mapper.IUserMapper;
 import com.events.modules.user.enumeration.RoleEnum;
 import com.events.modules.auth.exception.EmailAlreadyExistException;
 import com.events.modules.auth.exception.UserNotFoundException;
-import com.events.modules.auth.service.mail.IMailService;
+import com.events.common.mail.IMailService;
 import com.events.modules.auth.service.jwt.IJwtService;
 import com.events.common.exception.BadRequestException;
 import com.events.modules.user.entity.User;
@@ -122,9 +122,7 @@ public class AuthService implements IAuthService {
 
         User user = userService.findByEmail(request.email());
 
-        String jwt = jwtService.generateAccessToken(user);
-
-        return AccessTokenDto.builder().access_token(jwt).build();
+        return jwtService.generateAccessToken(user);
     }
 
     @Override

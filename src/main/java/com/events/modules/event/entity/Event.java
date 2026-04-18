@@ -4,6 +4,7 @@ import com.events.common.abstraction.AuditableEntity;
 import com.events.modules.category.entity.Category;
 import com.events.modules.country.entity.Country;
 import com.events.modules.event.entity.aggregate.Image;
+import com.events.modules.event.entity.aggregate.PriceCategory;
 import com.events.modules.event.entity.aggregate.Seat;
 import com.events.modules.user.entity.User;
 import jakarta.persistence.*;
@@ -27,7 +28,6 @@ import lombok.experimental.SuperBuilder;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @SuperBuilder
-
 public class Event extends AuditableEntity {
 
     @Column(nullable = false)
@@ -38,6 +38,9 @@ public class Event extends AuditableEntity {
 
     @Column(nullable = false)
     private Boolean isPublic;
+
+    @Column(nullable = false)
+    private Boolean isFeatured;
 
     @Column(nullable = false)
     private Boolean hasInvitationCode;
@@ -118,7 +121,6 @@ public class Event extends AuditableEntity {
         computeAvailableTickets();
         computeTotalTickets();
         isTicketSalesActive();
-
     }
 
     private void computeAvailableTickets() {

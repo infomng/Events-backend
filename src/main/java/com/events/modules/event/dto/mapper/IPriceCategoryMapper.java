@@ -1,7 +1,7 @@
 package com.events.modules.event.dto.mapper;
 
 import com.events.modules.event.dto.PriceCategoryDto;
-import com.events.modules.event.entity.PriceCategory;
+import com.events.modules.event.entity.aggregate.PriceCategory;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;

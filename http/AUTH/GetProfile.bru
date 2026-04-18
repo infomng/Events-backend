@@ -5,11 +5,7 @@ meta {
 }
 
 get {
-  url: {{host}}/api/v1/auth/profile
+  url: {{host}}/auth/profile
   body: none
-  auth: bearer
-}
-
-auth:bearer {
-  token: {{ACCESS_TOKEN}}
+  auth: inherit
 }

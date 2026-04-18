@@ -8,6 +8,8 @@ import com.events.modules.category.exception.CategoryNotFoundException;
 import com.events.modules.country.exception.CountryInUseException;
 import com.events.modules.country.exception.CountryNotFoundException;
 import com.events.modules.event.exception.EventNotFoundException;
+import com.events.modules.favorite.exception.FavoriteAlreadyExistsException;
+import com.events.modules.favorite.exception.FavoriteNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -101,7 +103,7 @@ public class GlobalExceptionHandler {
                 .body(EmptyResult.failure(detail));
     }
 
-    @ExceptionHandler({CategoryInUseException.class, CountryInUseException.class})
+    @ExceptionHandler({CategoryInUseException.class, CountryInUseException.class, FavoriteAlreadyExistsException.class})
     public ResponseEntity<EmptyResult> handleInUse(RuntimeException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         detail.setTitle(ex.getClass().getSimpleName());
@@ -109,6 +111,17 @@ public class GlobalExceptionHandler {
         detail.setProperty(Constants.TIMESTAMP, Instant.now().toString());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(EmptyResult.failure(detail));
+    }
+
+    @ExceptionHandler(FavoriteNotFoundException.class)
+    public ResponseEntity<EmptyResult> handleFavoriteNotFound(FavoriteNotFoundException ex) {
+        ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        detail.setTitle("Favorite not found");
+        detail.setDetail(ex.getMessage());
+        detail.setProperty(Constants.TIMESTAMP, Instant.now().toString());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
                 .body(EmptyResult.failure(detail));
     }
 
