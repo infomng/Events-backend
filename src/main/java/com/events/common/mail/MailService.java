@@ -1,5 +1,7 @@
-package com.events.modules.auth.service.mail;
+package com.events.common.mail;
 
+import com.events.common.config.properties.AppProperties;
+import com.events.common.config.properties.MailProperties;
 import com.events.common.enums.UrlsEnum;
 import com.events.common.utils.contants.Constants;
 import jakarta.mail.internet.MimeMessage;
@@ -19,11 +21,9 @@ import static org.hibernate.sql.ast.SqlTreeCreationLogger.LOGGER;
 public class MailService implements IMailService {
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+    private final AppProperties appProperties;
+    private final MailProperties mailProperties;
 
-    @Value("${app.base-url:http://localhost:8080}")
-    private String baseUrl;
 
 
     @Async
@@ -41,7 +41,7 @@ public class MailService implements IMailService {
     @Async
     @Override
     public void sendResetPasswordEmail(String email, String token) {
-        String path = UrlsEnum.RESET_PASSWORD.getPath();
+        String path = UrlsEnum.RESET_PASSWORD_FRONT_END_PATH.getPath();
         sendEmail(
                 email,
                 token,
@@ -52,7 +52,7 @@ public class MailService implements IMailService {
 
     private void sendEmail(String email, String token, String subject, String path, String message) {
         try {
-            String actionUrl = baseUrl + path + "?token=" + token;
+            String actionUrl = appProperties.frontendUrl() + path + "?token=" + token;
 
             String content = Constants.SEND_VERIFICATION_EMAIL_CONTENT.formatted(subject, message, actionUrl, actionUrl);
 
@@ -61,7 +61,7 @@ public class MailService implements IMailService {
 
             helper.setTo(email);
             helper.setSubject(subject);
-            helper.setFrom(fromEmail);
+            helper.setFrom(mailProperties.username());
             helper.setText(content, true);
             mailSender.send(mimeMessage);
 

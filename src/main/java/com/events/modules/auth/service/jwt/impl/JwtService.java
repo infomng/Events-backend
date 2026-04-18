@@ -2,12 +2,12 @@ package com.events.modules.auth.service.jwt.impl;
 
 import com.events.common.config.properties.JwtProperties;
 import com.events.common.utils.contants.Constants;
+import com.events.modules.auth.dto.AccessTokenDto;
 import com.events.modules.auth.service.jwt.IJwtService;
 import com.events.modules.user.entity.User;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,17 +23,11 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class JwtService implements IJwtService {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
-
-    @Value("${jwt.duration}")
-    private long jwtExpiration;
-
     private final JwtProperties jwtProperties;
 
     // Clé secrète (convertie en clé HMAC)
     private SecretKey getSecretKey() {
-        return Keys.hmacShaKeyFor(secretKey.getBytes());
+        return Keys.hmacShaKeyFor(jwtProperties.accessToken().secret().getBytes());
     }
 
     private String generateToken(User user, Long jwtExpiration) {
@@ -52,8 +46,8 @@ public class JwtService implements IJwtService {
 }
 
     @Override
-    public String generateAccessToken(User user) {
-        return this.generateToken(user, jwtProperties.duration());
+    public AccessTokenDto generateAccessToken(User user) {
+        return new AccessTokenDto(this.generateToken(user, jwtProperties.accessToken().duration()));
     }
 
     @Override
@@ -66,7 +60,7 @@ public class JwtService implements IJwtService {
                 .subject(email)
                 .claim(Constants.EMAIL, email)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .expiration(new Date(System.currentTimeMillis() + jwtProperties.accessToken().duration()))
                 .signWith(getSecretKey())
                 .compact();
     }

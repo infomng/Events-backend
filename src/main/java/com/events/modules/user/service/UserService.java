@@ -2,12 +2,22 @@ package com.events.modules.user.service;
 
 import com.events.modules.auth.dto.RegisterCommandDto;
 import com.events.modules.auth.exception.UserNotFoundException;
+import com.events.modules.auth.service.auth.IAuthService;
+import com.events.modules.event.entity.Event;
+import com.events.modules.favorite.exception.FavoriteAlreadyExistsException;
+import com.events.modules.favorite.exception.FavoriteNotFoundException;
 import com.events.modules.user.entity.User;
 import com.events.modules.user.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 
 @Service
@@ -46,7 +56,8 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public User findById(java.util.UUID userId) {
+    public User findById(UUID userId) {
         return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 }
+

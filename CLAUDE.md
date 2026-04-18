@@ -49,6 +49,7 @@ The codebase follows a **feature-based modular architecture** under `com.events.
 - **event**: Core event management with price categories, seats, and reservations
 - **category**: Event category management (refactored from event module)
 - **country**: Country management for event locations
+- **favorite**: User favorite events management (many-to-many relationship)
 - **booking**: Booking lifecycle and reservation management
 - **ticket**: Ticket generation and management
 - **payment**: Payment processing
@@ -110,6 +111,7 @@ ArchUnit tests enforce architecture rules in `src/test/java/com/events/architect
 - **EnumNamingTest**: Enums must have names ending with "Enum"
 - **InterfaceNamingTest**: Interfaces must start with "I"
 - **RepositoryAccessTest**: Repository interfaces (e.g., `IUserRepository`) should only be accessed by their corresponding service (e.g., `UserService`)
+  - Exception: `FavoriteService` can access `IEventRepository` (manages many-to-many relationship between User and Event)
 
 ## Key Design Patterns
 
@@ -174,6 +176,7 @@ Global exception handling via `GlobalExceptionHandler` with `@RestControllerAdvi
 - `ResourceNotFoundException` for missing resources (HTTP 404)
 - Custom domain exceptions (e.g., `EventNotFoundException`, `EventForbidenException`, `CategoryNotFoundException`, `CategoryInUseException`, `CountryNotFoundException`, `CountryInUseException`)
 - Auth exceptions (e.g., `UnauthorizedException`, `UserNotFoundException`, `InvalidRefreshTokenException`, `EmailAlreadyExistException`)
+- Favorite exceptions (e.g., `FavoriteAlreadyExistsException`, `FavoriteNotFoundException`)
 
 Exception handlers return `Result.failure(ProblemDetail)` with appropriate HTTP status codes.
 Do not expose stack traces to clients.

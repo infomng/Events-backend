@@ -61,9 +61,7 @@ class CountryServiceTest {
                 countryId,
                 "France",
                 "FR",
-                PaysEnum.FRANCE,
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                PaysEnum.FRANCE
         );
 
         createCommandDto = new CountryCreateCommandDto(PaysEnum.FRANCE);
