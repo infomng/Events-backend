@@ -3,6 +3,9 @@ package com.events.common.exception;
 import com.events.common.result.EmptyResult;
 import com.events.common.result.Result;
 import com.events.common.utils.contants.Constants;
+import com.events.modules.cart.exception.CartItemNotFoundException;
+import com.events.modules.cart.exception.CartNotFoundException;
+import com.events.modules.cart.exception.InvalidQuantityException;
 import com.events.modules.category.exception.CategoryInUseException;
 import com.events.modules.category.exception.CategoryNotFoundException;
 import com.events.modules.country.exception.CountryInUseException;
@@ -92,7 +95,7 @@ public class GlobalExceptionHandler {
                 .body(EmptyResult.failure(detail));
     }
 
-    @ExceptionHandler({EventNotFoundException.class, CategoryNotFoundException.class, CountryNotFoundException.class})
+    @ExceptionHandler({EventNotFoundException.class, CategoryNotFoundException.class, CountryNotFoundException.class, CartNotFoundException.class, CartItemNotFoundException.class})
     public ResponseEntity<EmptyResult> handleNotFound(RuntimeException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
         detail.setTitle(ex.getClass().getSimpleName());
@@ -103,7 +106,7 @@ public class GlobalExceptionHandler {
                 .body(EmptyResult.failure(detail));
     }
 
-    @ExceptionHandler({CategoryInUseException.class, CountryInUseException.class, FavoriteAlreadyExistsException.class})
+    @ExceptionHandler({CategoryInUseException.class, CountryInUseException.class, FavoriteAlreadyExistsException.class, InvalidQuantityException.class})
     public ResponseEntity<EmptyResult> handleInUse(RuntimeException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         detail.setTitle(ex.getClass().getSimpleName());

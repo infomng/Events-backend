@@ -1,0 +1,26 @@
+meta {
+  name: Update Cart Item Quantity
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{host}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+body:json {
+  {
+    "cartItemId": "{{cartItemId}}",
+    "quantity": 5
+  }
+}
+
+vars:pre-request {
+  cartItemId:
+}

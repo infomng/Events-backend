@@ -1,0 +1,19 @@
+meta {
+  name: Remove Item from Cart
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{host}}/cart/items/{{cartItemId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+vars:pre-request {
+  cartItemId:
+}

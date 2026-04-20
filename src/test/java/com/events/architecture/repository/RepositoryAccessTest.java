@@ -32,10 +32,24 @@ public class RepositoryAccessTest {
                                     dep.getSimpleName().equals("FavoriteService") &&
                                     repository.getSimpleName().equals("IEventRepository");
 
+                                // Allow CartService to access IEventRepository
+                                // (CartService needs to validate events and get price categories)
+                                boolean isCartServiceAccessingEventRepo =
+                                    dep.getSimpleName().equals("CartService") &&
+                                    repository.getSimpleName().equals("IEventRepository");
+
+                                // Allow CartService to access ICartItemRepository
+                                // (CartItem is an aggregate of Cart and managed by CartService)
+                                boolean isCartServiceAccessingCartItemRepo =
+                                    dep.getSimpleName().equals("CartService") &&
+                                    repository.getSimpleName().equals("ICartItemRepository");
+
                                 if (!dep.getSimpleName().equals(expectedService) &&
                                         !dep.getSimpleName().startsWith(expectedServiceTest) &&
                                         !dep.getSimpleName().contains(expectedNestedServiceName) &&
-                                        !isFavoriteServiceAccessingEventRepo) {
+                                        !isFavoriteServiceAccessingEventRepo &&
+                                        !isCartServiceAccessingEventRepo &&
+                                        !isCartServiceAccessingCartItemRepo) {
                                     throw new AssertionError(
                                             repository.getSimpleName() + " should only be accessed by " + expectedService
                                                     + " or nested test classes that contains: " + expectedNestedServiceName
