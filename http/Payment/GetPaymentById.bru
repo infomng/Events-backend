@@ -1,0 +1,19 @@
+meta {
+  name: Get Payment By ID
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{host}}/payments/{{paymentId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+vars:pre-request {
+  paymentId:
+}

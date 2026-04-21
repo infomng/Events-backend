@@ -179,6 +179,7 @@ Global exception handling via `GlobalExceptionHandler` with `@RestControllerAdvi
 - Auth exceptions (e.g., `UnauthorizedException`, `UserNotFoundException`, `InvalidRefreshTokenException`, `EmailAlreadyExistException`)
 - Favorite exceptions (e.g., `FavoriteAlreadyExistsException`, `FavoriteNotFoundException`)
 - Cart exceptions (e.g., `CartNotFoundException`, `CartItemNotFoundException`, `InvalidQuantityException`)
+- Payment exceptions (e.g., `PaymentNotFoundException`, `PaymentFailedException`, `InvalidPaymentStatusException`, `PaymentAlreadyProcessedException`)
 
 Exception handlers return `Result.failure(ProblemDetail)` with appropriate HTTP status codes.
 Do not expose stack traces to clients.
