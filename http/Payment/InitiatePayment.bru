@@ -1,0 +1,31 @@
+meta {
+  name: Initiate Payment
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/payments/initiate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+body:json {
+  {
+    "bookingId": "{{bookingId}}",
+    "amount": 150.00,
+    "currency": "USD",
+    "paymentMethod": "CREDIT_CARD",
+    "paymentGateway": "STRIPE",
+    "returnUrl": "http://localhost:3000/payment/success",
+    "metadata": "{\"customerId\": \"12345\"}"
+  }
+}
+
+vars:pre-request {
+  bookingId:
+}

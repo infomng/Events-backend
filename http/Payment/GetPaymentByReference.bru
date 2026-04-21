@@ -1,0 +1,19 @@
+meta {
+  name: Get Payment By Reference
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/payments/reference/{{paymentReference}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+vars:pre-request {
+  paymentReference:
+}

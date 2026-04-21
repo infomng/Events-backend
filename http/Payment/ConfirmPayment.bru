@@ -1,0 +1,27 @@
+meta {
+  name: Confirm Payment
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{host}}/payments/confirm
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+body:json {
+  {
+    "paymentReference": "{{paymentReference}}",
+    "transactionId": "TXN-{{$randomUUID}}",
+    "gatewayResponse": "{\"status\": \"success\", \"gateway\": \"stripe\"}"
+  }
+}
+
+vars:pre-request {
+  paymentReference:
+}
