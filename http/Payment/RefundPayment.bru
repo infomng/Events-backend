@@ -1,0 +1,26 @@
+meta {
+  name: Refund Payment
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{host}}/payments/refund
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+body:json {
+  {
+    "paymentId": "{{paymentId}}",
+    "reason": "Customer requested refund due to event cancellation"
+  }
+}
+
+vars:pre-request {
+  paymentId:
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Check Payment Status
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{host}}/payments/status/{{paymentReference}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+vars:pre-request {
+  paymentReference:
+}

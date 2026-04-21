@@ -1,16 +1,16 @@
 package com.events.modules.payment.entity;
 
 import com.events.common.abstraction.AuditableEntity;
-import com.events.modules.booking.entity.Booking;
-import com.events.modules.user.entity.User;
+import com.events.modules.payment.enumeration.PaymentGatewayEnum;
+import com.events.modules.payment.enumeration.PaymentMethodEnum;
+import com.events.modules.payment.enumeration.PaymentStatusEnum;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "payments")
@@ -21,24 +21,67 @@ import java.math.BigDecimal;
 @SuperBuilder
 public class Payment extends AuditableEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "booking_id", nullable = false)
-    private Booking booking;
+    @Column(nullable = false)
+    private UUID userId;
 
     @Column(nullable = false)
+    private UUID bookingId;
+
+    @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
+    @Builder.Default
+    @Column(nullable = false, length = 3)
+    private String currency = "USD";
+
+    @Builder.Default
     @Column(nullable = false)
-    private String currency;
+    @Enumerated(EnumType.STRING)
+    private PaymentStatusEnum status = PaymentStatusEnum.PENDING;
 
     @Column(nullable = false)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private PaymentMethodEnum paymentMethod;
 
-    private String paymentGateway;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private PaymentGatewayEnum paymentGateway;
 
-    private String transactionId;
+    @Column(unique = true)
+    private String transactionId; // ID from payment gateway
+
+    @Column(unique = true)
+    private String paymentReference; // Internal reference
+
+    private LocalDateTime paidAt;
+
+    @Column(columnDefinition = "TEXT")
+    private String gatewayResponse; // JSON response from gateway
+
+    private String failureReason;
+
+    @Column(columnDefinition = "TEXT")
+    private String metadata; // Additional metadata as JSON
+
+    @PrePersist
+    private void generatePaymentReference() {
+        if (paymentReference == null) {
+            paymentReference = "PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
+    }
+
+    public void markAsPaid(String transactionId) {
+        this.status = PaymentStatusEnum.COMPLETED;
+        this.transactionId = transactionId;
+        this.paidAt = LocalDateTime.now();
+    }
+
+    public void markAsFailed(String reason) {
+        this.status = PaymentStatusEnum.FAILED;
+        this.failureReason = reason;
+    }
+
+    public void markAsRefunded() {
+        this.status = PaymentStatusEnum.REFUNDED;
+    }
 }

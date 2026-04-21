@@ -13,6 +13,10 @@ import com.events.modules.country.exception.CountryNotFoundException;
 import com.events.modules.event.exception.EventNotFoundException;
 import com.events.modules.favorite.exception.FavoriteAlreadyExistsException;
 import com.events.modules.favorite.exception.FavoriteNotFoundException;
+import com.events.modules.payment.exception.InvalidPaymentStatusException;
+import com.events.modules.payment.exception.PaymentAlreadyProcessedException;
+import com.events.modules.payment.exception.PaymentFailedException;
+import com.events.modules.payment.exception.PaymentNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -95,7 +99,7 @@ public class GlobalExceptionHandler {
                 .body(EmptyResult.failure(detail));
     }
 
-    @ExceptionHandler({EventNotFoundException.class, CategoryNotFoundException.class, CountryNotFoundException.class, CartNotFoundException.class, CartItemNotFoundException.class})
+    @ExceptionHandler({EventNotFoundException.class, CategoryNotFoundException.class, CountryNotFoundException.class, CartNotFoundException.class, CartItemNotFoundException.class, PaymentNotFoundException.class})
     public ResponseEntity<EmptyResult> handleNotFound(RuntimeException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
         detail.setTitle(ex.getClass().getSimpleName());
@@ -106,7 +110,7 @@ public class GlobalExceptionHandler {
                 .body(EmptyResult.failure(detail));
     }
 
-    @ExceptionHandler({CategoryInUseException.class, CountryInUseException.class, FavoriteAlreadyExistsException.class, InvalidQuantityException.class})
+    @ExceptionHandler({CategoryInUseException.class, CountryInUseException.class, FavoriteAlreadyExistsException.class, InvalidQuantityException.class, PaymentAlreadyProcessedException.class, InvalidPaymentStatusException.class, PaymentFailedException.class})
     public ResponseEntity<EmptyResult> handleInUse(RuntimeException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         detail.setTitle(ex.getClass().getSimpleName());
