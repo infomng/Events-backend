@@ -53,6 +53,9 @@ public class Payment extends AuditableEntity {
     @Column(unique = true)
     private String paymentReference; // Internal reference
 
+    private String stripePaymentIntentId; // New field for Stripe Payment Intent ID
+    private String stripeClientSecret; // New field for Stripe Client Secret
+
     private LocalDateTime paidAt;
 
     @Column(columnDefinition = "TEXT")
