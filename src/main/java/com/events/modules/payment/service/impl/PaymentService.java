@@ -5,6 +5,7 @@ import com.events.modules.auth.service.auth.IAuthService;
 import com.events.modules.payment.dto.*;
 import com.events.modules.payment.dto.mapper.IPaymentMapper;
 import com.events.modules.payment.entity.Payment;
+import com.events.modules.payment.enumeration.PaymentGatewayEnum;
 import com.events.modules.payment.enumeration.PaymentStatusEnum;
 import com.events.modules.payment.exception.InvalidPaymentStatusException;
 import com.events.modules.payment.exception.PaymentAlreadyProcessedException;
@@ -12,7 +13,10 @@ import com.events.modules.payment.exception.PaymentFailedException;
 import com.events.modules.payment.exception.PaymentNotFoundException;
 import com.events.modules.payment.repository.IPaymentRepository;
 import com.events.modules.payment.service.IPaymentService;
+import com.events.modules.payment.service.StripeGatewayService;
 import com.events.modules.user.entity.User;
+import com.stripe.exception.StripeException;
+import com.stripe.model.PaymentIntent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,6 +26,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +40,7 @@ public class PaymentService implements IPaymentService {
     private final IAuthService authService;
     private final IPaymentMapper paymentMapper;
     private final LocalizationService localizationService;
+    private final StripeGatewayService stripeGatewayService; // Injected StripeGatewayService
 
     @Override
     public PaymentResponseDto initiatePayment(InitiatePaymentDto dto) {
@@ -58,16 +64,43 @@ public class PaymentService implements IPaymentService {
         log.info("Payment initiated: {} for booking: {} by user: {}",
                 payment.getPaymentReference(), dto.bookingId(), currentUser.getId());
 
-        // In real implementation, this would integrate with payment gateway
-        // For now, we return a mock redirect URL
-        String redirectUrl = generatePaymentRedirectUrl(payment, dto.returnUrl());
+        String clientSecret = null;
+        String redirectUrl = null;
+        String message = localizationService.getMessage("payment.redirect.message");
+
+        if (payment.getPaymentGateway() == PaymentGatewayEnum.STRIPE) {
+            try {
+                // Stripe requires amount in the smallest currency unit (e.g., cents)
+                Long amountInCents = payment.getAmount().multiply(new BigDecimal("100")).longValueExact();
+                PaymentIntent paymentIntent = stripeGatewayService.createPaymentIntent(
+                        amountInCents,
+                        payment.getCurrency(),
+                        "Payment for booking " + payment.getBookingId(),
+                        payment.getPaymentReference()
+                );
+                payment.setStripePaymentIntentId(paymentIntent.getId());
+                payment.setStripeClientSecret(paymentIntent.getClientSecret());
+                paymentRepository.save(payment); // Save updated payment with Stripe details
+                clientSecret = paymentIntent.getClientSecret();
+                message = localizationService.getMessage("payment.stripe.initiated");
+            } catch (StripeException e) {
+                log.error("Failed to create Stripe Payment Intent for payment {}: {}", payment.getId(), e.getMessage());
+                payment.markAsFailed(e.getMessage());
+                paymentRepository.save(payment);
+                throw new PaymentFailedException(localizationService.getMessage("payment.stripe.failed"));
+            }
+        } else {
+            // For other payment gateways or mock implementation
+            redirectUrl = generatePaymentRedirectUrl(payment, dto.returnUrl());
+        }
 
         return new PaymentResponseDto(
                 payment.getId(),
                 payment.getPaymentReference(),
                 payment.getStatus(),
                 redirectUrl,
-                localizationService.getMessage("payment.redirect.message")
+                clientSecret,
+                message
         );
     }
 
@@ -92,8 +125,56 @@ public class PaymentService implements IPaymentService {
             );
         }
 
-        // Mark payment as completed
-        payment.markAsPaid(dto.transactionId());
+        if (payment.getPaymentGateway() == PaymentGatewayEnum.STRIPE) {
+            try {
+                PaymentIntent paymentIntent = stripeGatewayService.retrievePaymentIntent(payment.getStripePaymentIntentId());
+                String stripeStatus = paymentIntent.getStatus();
+
+                switch (stripeStatus) {
+                    case "succeeded":
+                    case "processing":
+                    case "requires_capture": // If configured for manual capture
+                        payment.markAsPaid(paymentIntent.getId());
+                        if (paymentIntent.getLastPaymentError() != null) {
+                            payment.setGatewayResponse(paymentIntent.getLastPaymentError().getMessage());
+                        }
+                        break;
+                    case "requires_action": // Payment requires customer action (e.g., 3D Secure)
+                    case "requires_confirmation":
+                        log.warn("Stripe Payment Intent {} requires action or confirmation. Attempting to confirm.", paymentIntent.getId());
+                        PaymentIntent confirmedPaymentIntent = stripeGatewayService.confirmPaymentIntent(paymentIntent.getId());
+                        stripeStatus = confirmedPaymentIntent.getStatus(); // Re-check status after confirmation attempt
+
+                        if ("succeeded".equals(stripeStatus) || "processing".equals(stripeStatus) || "requires_capture".equals(stripeStatus)) {
+                            payment.markAsPaid(confirmedPaymentIntent.getId());
+                            if (confirmedPaymentIntent.getLastPaymentError() != null) {
+                                payment.setGatewayResponse(confirmedPaymentIntent.getLastPaymentError().getMessage());
+                            }
+                        } else {
+                            payment.markAsFailed("Stripe payment requires further action or failed confirmation. Current status: " + stripeStatus);
+                            paymentRepository.save(payment);
+                            throw new PaymentFailedException(localizationService.getMessage("payment.stripe.failed.confirmation", stripeStatus));
+                        }
+                        break;
+                    case "canceled":
+                        payment.markAsFailed("Stripe payment was cancelled. Status: " + stripeStatus);
+                        paymentRepository.save(payment);
+                        throw new InvalidPaymentStatusException(localizationService.getMessage("payment.stripe.cancelled", stripeStatus));
+                    default:
+                        payment.markAsFailed("Unexpected Stripe payment status: " + stripeStatus);
+                        paymentRepository.save(payment);
+                        throw new PaymentFailedException(localizationService.getMessage("payment.stripe.unexpected.status", stripeStatus));
+                }
+            } catch (StripeException e) {
+                log.error("Failed to confirm Stripe Payment Intent {}: {}", payment.getStripePaymentIntentId(), e.getMessage());
+                payment.markAsFailed(e.getMessage());
+                paymentRepository.save(payment);
+                throw new PaymentFailedException(localizationService.getMessage("payment.stripe.failed.api.error", e.getMessage()));
+            }
+        } else {
+            // Existing logic for other gateways
+            payment.markAsPaid(dto.transactionId());
+        }
 
         if (dto.gatewayResponse() != null) {
             payment.setGatewayResponse(dto.gatewayResponse());
@@ -102,7 +183,7 @@ public class PaymentService implements IPaymentService {
         paymentRepository.save(payment);
 
         log.info("Payment confirmed: {} with transaction: {}",
-                dto.paymentReference(), dto.transactionId());
+                dto.paymentReference(), payment.getTransactionId() != null ? payment.getTransactionId() : "N/A");
 
         // TODO: Update booking status to CONFIRMED
         // TODO: Trigger ticket generation
