@@ -54,3 +54,8 @@ supabase.service-role-key=YOUR_SUPABASE_SERVICE_ROLE_KEY
 supabase.bucket-name=eventsimagebucket
 supabase.storage-object=/storage/v1/object/
 supabase.storage-object-public=/storage/v1/object/public/
+
+# Stripe Configuration
+stripe.secret-key=YOUR_STRIPE_SECRET_KEY
+stripe.publishable-key=YOUR_STRIPE_PUBLISHABLE_KEY
+stripe.webhook-secret=YOUR_STRIPE_WEBHOOK_SECRET
