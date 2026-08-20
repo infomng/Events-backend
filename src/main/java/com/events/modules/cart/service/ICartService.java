@@ -1,6 +1,6 @@
 package com.events.modules.cart.service;
 
-import com.events.modules.cart.dto.AddToCartDto;
+import com.events.modules.cart.dto.AddItemToCartDto;
 import com.events.modules.cart.dto.GetCartDto;
 import com.events.modules.cart.dto.UpdateCartItemDto;
 
@@ -10,9 +10,9 @@ public interface ICartService {
 
     /**
      * Add an item to the current user's cart
-     * @param addToCartDto the item to add
+     * @param addItemToCartDto the item to add
      */
-    void addToCart(AddToCartDto addToCartDto);
+    void addItemToCart(AddItemToCartDto addItemToCartDto);
 
     /**
      * Get the current user's active cart
@@ -24,10 +24,10 @@ public interface ICartService {
      * Remove an item from the cart
      * @param cartItemId the ID of the cart item to remove
      */
-    void removeFromCart(UUID cartItemId);
+    void removeItemFromCart(UUID cartItemId);
 
     /**
-     * Update the quantity of a cart item
+     * Update the newQuantity of a cart item
      * @param updateDto the update data
      */
     void updateCartItem(UpdateCartItemDto updateDto);

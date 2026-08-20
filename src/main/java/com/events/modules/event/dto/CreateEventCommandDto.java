@@ -3,11 +3,13 @@ package com.events.modules.event.dto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Builder
 public record CreateEventCommandDto(@NotNull String name,
                                     @NotNull String description,
                                     @NotNull Boolean isPublic,
@@ -26,7 +28,7 @@ public record CreateEventCommandDto(@NotNull String name,
                                     Boolean hasSeats,
                                     List<UUID> staffMembers,
                                     @NotEmpty(message = "At least one price category is required")
-                                    List< @Valid PriceCategoryDto> categories,
+                                    List< @Valid PriceCategoryDto> priceCategories,
                                     @NotNull(message = "Category ID is required")
                                     UUID categoryId,
                                     @NotNull(message = "Country ID is required")

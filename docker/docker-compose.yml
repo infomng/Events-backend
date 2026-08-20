@@ -1,11 +1,11 @@
 
 services:
-  serenade-db:
+  events-db:
     image: postgres:16
     restart: unless-stopped
     container_name: postgres-16
     volumes:
-      - postgres_data:/home/inscriptions/db/data
+      - postgres_data:/home/events/db/data
     ports:
       - "5432:5432"
     environment:

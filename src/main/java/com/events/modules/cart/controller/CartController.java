@@ -1,7 +1,7 @@
 package com.events.modules.cart.controller;
 
 import com.events.common.result.Result;
-import com.events.modules.cart.dto.AddToCartDto;
+import com.events.modules.cart.dto.AddItemToCartDto;
 import com.events.modules.cart.dto.GetCartDto;
 import com.events.modules.cart.dto.UpdateCartItemDto;
 import com.events.modules.cart.service.ICartService;
@@ -22,8 +22,8 @@ public class CartController {
     private final ICartService cartService;
 
     @PostMapping("/items")
-    public ResponseEntity<Result<Void>> addToCart(@Valid @RequestBody AddToCartDto addToCartDto) {
-        cartService.addToCart(addToCartDto);
+    public ResponseEntity<Result<Void>> addToCart(@Valid @RequestBody AddItemToCartDto addItemToCartDto) {
+        cartService.addItemToCart(addItemToCartDto);
         return ResponseEntity.ok(Result.success());
     }
 
@@ -35,13 +35,13 @@ public class CartController {
 
     @DeleteMapping("/items/{cartItemId}")
     public ResponseEntity<Result<Void>> removeFromCart(@PathVariable UUID cartItemId) {
-        cartService.removeFromCart(cartItemId);
+        cartService.removeItemFromCart(cartItemId);
         return ResponseEntity.ok(Result.success());
     }
 
     @PutMapping("/items")
     public ResponseEntity<Result<Void>> updateCartItem(@Valid @RequestBody UpdateCartItemDto updateDto) {
-        cartService.updateCartItem(updateDto);
+//        cartService.updateCartItem(updateDto);
         return ResponseEntity.ok(Result.success());
     }
 

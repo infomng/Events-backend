@@ -30,6 +30,7 @@ import com.events.modules.event.specification.EventSpecifications;
 import com.events.modules.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
@@ -125,6 +126,7 @@ public class EventService implements IEventService {
     }
 
     @Override
+    @Cacheable(value = "EVENTS", key = "#page + '-' + #size + '-' + #country")
     public Page<GetEventDto> getAllEvents(int page, int size, String country) {
         Pageable pageable = PageRequest.of(page, size);
         var eventsList =  eventRepository.findAll(pageable);
@@ -135,6 +137,7 @@ public class EventService implements IEventService {
     }
 
     @Override
+    @Cacheable(value = "EVENT", key = "#id")
     public GetEventDto getEventById(UUID id) {
         return eventRepository.findById(id)
                 .map(eventMapper::toDto)
@@ -148,7 +151,7 @@ public class EventService implements IEventService {
     }
 
     @Override
-    @CacheEvict(value = "eventSearch", allEntries = true)
+    @CachePut(value = "EVENT", key = "#id")
     public void updateEvent(UUID id, UpdateEventCommandDto command) {
         User currentUser = authService.getCurrentUser();
 
@@ -267,7 +270,6 @@ public class EventService implements IEventService {
     }
 
     @Override
-    @CacheEvict(value = "eventSearch", allEntries = true)
     public void publishEvent(UUID eventId) {
         User currentUser = authService.getCurrentUser();
 
@@ -286,6 +288,15 @@ public class EventService implements IEventService {
     public List<String> getDefaultPriceCategories() {
         return List.of(DefaultPriceCategoryEnum.FREE.name(), DefaultPriceCategoryEnum.REGULAR.name(),
                 DefaultPriceCategoryEnum.VIP.name(), DefaultPriceCategoryEnum.PREMIUM.name());
+    }
+
+    @Override
+    public void saveAll(List<CreateEventCommandDto> events) {
+        List<Event> eventEntities = events.stream()
+                .map(eventMapper::toEntity)
+                .toList();
+
+        eventRepository.saveAll(eventEntities);
     }
 
     @Override

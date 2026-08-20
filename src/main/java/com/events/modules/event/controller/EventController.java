@@ -28,7 +28,7 @@ public class EventController {
 
     private final IEventService eventService;
 
-    @GetMapping("default-price-categories")
+    @GetMapping("default-price-priceCategories")
     public ResponseEntity<Result<List<String>>> getDefaultPriceCategories() {
         return ResponseEntity.ok(Result.success(eventService.getDefaultPriceCategories()));
     }
@@ -61,6 +61,7 @@ public class EventController {
 
     @GetMapping("/{id}")
     public GetEventDto getById(@PathVariable UUID id) {
+        var test = eventService.getEventById(id);
         return eventService.getEventById(id);
     }
 

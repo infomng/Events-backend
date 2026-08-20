@@ -19,7 +19,7 @@ Default credentials (change in production):
 
 Copy the example configuration file:
 ```bash
-cp src/main/resources/application.properties.example src/main/resources/application.properties
+cp src/main/resources/application.properties
 ```
 
 Then fill in the following secrets:

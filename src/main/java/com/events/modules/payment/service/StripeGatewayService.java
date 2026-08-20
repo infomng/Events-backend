@@ -26,9 +26,7 @@ public class StripeGatewayService {
 
         // Optional: Add metadata
         if (orderId != null) {
-            Map<String, String> metadata = new HashMap<>();
-            metadata.put("order_id", orderId);
-            createParamsBuilder.setMetadata(metadata);
+            createParamsBuilder.putMetadata("order_id", orderId);
         }
 
         PaymentIntentCreateParams createParams = createParamsBuilder.build();
