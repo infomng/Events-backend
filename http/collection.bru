@@ -22,6 +22,10 @@ script:pre-request {
    // TODO: runRequest is not yet available in the CLI (see: https://github.com/usebruno/bruno/issues/1350)
    /*
    const requestResponse = await bru.runRequest('Login.bru');
+
+   const headers = requestResponse.getHeaders();
+   console.log("All response headers:", headers);
+
    if(requestResponse.body.value.access_token) {
      bru.setVar('access_token_set_by_collection_script', requestResponse.body.value.access_token);
    }*/

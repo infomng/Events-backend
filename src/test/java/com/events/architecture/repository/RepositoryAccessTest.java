@@ -33,7 +33,7 @@ public class RepositoryAccessTest {
                                     repository.getSimpleName().equals("IEventRepository");
 
                                 // Allow CartService to access IEventRepository
-                                // (CartService needs to validate events and get price categories)
+                                // (CartService needs to validate events and get price priceCategories)
                                 boolean isCartServiceAccessingEventRepo =
                                     dep.getSimpleName().equals("CartService") &&
                                     repository.getSimpleName().equals("IEventRepository");

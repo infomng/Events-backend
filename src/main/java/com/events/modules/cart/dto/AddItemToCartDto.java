@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.UUID;
 
-public record AddToCartDto(
+public record AddItemToCartDto(
         @NotNull(message = "Event ID is required")
         UUID eventId,
 
@@ -14,6 +14,8 @@ public record AddToCartDto(
 
         @NotNull(message = "Quantity is required")
         @Min(value = 1, message = "Quantity must be at least 1")
-        Integer quantity
+        Integer quantity,
+
+        String seatId
 ) {
 }

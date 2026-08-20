@@ -3,8 +3,8 @@ package com.events.modules.payment.exception;
 import com.events.modules.payment.enumeration.PaymentStatusEnum;
 
 public class InvalidPaymentStatusException extends RuntimeException {
-    public InvalidPaymentStatusException(String message) {
-        super(message);
+    public InvalidPaymentStatusException() {
+        super("Invalid payment status.");
     }
 
     public InvalidPaymentStatusException(PaymentStatusEnum currentStatus, PaymentStatusEnum expectedStatus) {

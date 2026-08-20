@@ -1,11 +1,11 @@
 package com.events.modules.cart.entity;
 
 import com.events.common.abstraction.AuditableEntity;
+import com.events.modules.cart.enumeration.CartItemStatusEnum;
+import com.events.modules.cart.enumeration.CartStatusEnum;
+import com.events.modules.cart.exception.InvalidQuantityException;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
@@ -33,13 +33,22 @@ public class CartItem extends AuditableEntity {
     private String priceCategoryName; // snapshot du nom de la catégorie
 
     @Column(nullable = false)
+
     private Integer quantity;
 
     @Column(nullable = false)
-    private BigDecimal unitPrice; // snapshot prix unitaire au moment de l'ajout
+    private BigDecimal unitPrice;
+
+    @Column(nullable = false)
+    private BigDecimal oldUnitPrice; // snapshot prix unitaire au moment de l'ajout
 
     @Column(nullable = false)
     private BigDecimal totalPrice; // prix total calculé
+
+    @Builder.Default
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CartItemStatusEnum status = CartItemStatusEnum.ACTIVE;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id", nullable = false)
@@ -47,15 +56,25 @@ public class CartItem extends AuditableEntity {
 
     @PrePersist
     private void calculateTotalPrice() {
+        this.oldUnitPrice = this.unitPrice;
+        calculatePrice();
+    }
+
+    @PreUpdate
+    private void updateTotalPrice() {
+        calculatePrice();
+    }
+
+    private void calculatePrice() {
         if (unitPrice != null && quantity != null) {
             totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
         }
     }
 
-    @PreUpdate
-    private void updateTotalPrice() {
-        if (unitPrice != null && quantity != null) {
-            totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
-        }
+    public void updateQuantity(int newQuantity){
+            if (newQuantity < 1){
+                throw new InvalidQuantityException();
+            }
+            this.quantity = newQuantity;
     }
 }

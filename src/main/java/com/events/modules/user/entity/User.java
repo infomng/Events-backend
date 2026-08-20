@@ -4,6 +4,7 @@ import com.events.common.abstraction.AuditableEntity;
 import com.events.modules.country.entity.Country;
 import com.events.modules.event.entity.Event;
 import com.events.modules.user.enumeration.RoleEnum;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -47,16 +48,20 @@ public class User extends AuditableEntity {
     private boolean isCredentialsNonExpired = true;
 
     @Builder.Default
-    @OneToMany(mappedBy = "organizer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    @OneToMany(mappedBy = "organizer", fetch = FetchType.LAZY)
     private Set<Event> organizedEvents = new HashSet<>();
 
     @ManyToMany(mappedBy = "attendees",  fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Event> eventsAttending;
 
     @ManyToMany(mappedBy = "staff", fetch = FetchType.LAZY)
+    @JsonIgnore
     private Set<Event> eventsStaffing;
 
     @Builder.Default
+    @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "USER_FAVORITE_EVENTS",

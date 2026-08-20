@@ -7,9 +7,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "carts")
@@ -27,13 +25,8 @@ public class Cart extends AuditableEntity {
     private BigDecimal total;
 
     @Builder.Default
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private CartStatusEnum status = CartStatusEnum.ACTIVE;
-
-    @Builder.Default
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<CartItem> items = new ArrayList<>();
+    private Set<CartItem> items = new HashSet<>();
 
     public void addItem(CartItem item) {
         items.add(item);
@@ -62,9 +55,6 @@ public class Cart extends AuditableEntity {
     private void prePersist() {
         if (total == null) {
             calculateTotal();
-        }
-        if (status == null) {
-            status = CartStatusEnum.ACTIVE;
         }
     }
 

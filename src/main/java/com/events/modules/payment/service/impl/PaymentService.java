@@ -48,9 +48,7 @@ public class PaymentService implements IPaymentService {
 
         // Check if payment already exists for this booking
         if (paymentRepository.existsByBookingId(dto.bookingId())) {
-            throw new PaymentAlreadyProcessedException(
-                    localizationService.getMessage("payment.already.exists")
-            );
+            throw new PaymentAlreadyProcessedException();
         }
 
         // Create payment entity
@@ -113,16 +111,11 @@ public class PaymentService implements IPaymentService {
 
         // Validate payment status
         if (payment.getStatus() == PaymentStatusEnum.COMPLETED) {
-            throw new PaymentAlreadyProcessedException(
-                    localizationService.getMessage("payment.already.processed.reference", dto.paymentReference())
-            );
+            throw new PaymentAlreadyProcessedException();
         }
 
         if (payment.getStatus() == PaymentStatusEnum.CANCELLED) {
-            throw new InvalidPaymentStatusException(
-                    localizationService.getMessage("payment.invalid.status",
-                            PaymentStatusEnum.CANCELLED, PaymentStatusEnum.COMPLETED)
-            );
+            throw new InvalidPaymentStatusException();
         }
 
         if (payment.getPaymentGateway() == PaymentGatewayEnum.STRIPE) {
@@ -159,7 +152,7 @@ public class PaymentService implements IPaymentService {
                     case "canceled":
                         payment.markAsFailed("Stripe payment was cancelled. Status: " + stripeStatus);
                         paymentRepository.save(payment);
-                        throw new InvalidPaymentStatusException(localizationService.getMessage("payment.stripe.cancelled", stripeStatus));
+                        throw new InvalidPaymentStatusException();
                     default:
                         payment.markAsFailed("Unexpected Stripe payment status: " + stripeStatus);
                         paymentRepository.save(payment);
@@ -256,9 +249,7 @@ public class PaymentService implements IPaymentService {
         // Can only cancel pending or processing payments
         if (payment.getStatus() != PaymentStatusEnum.PENDING &&
             payment.getStatus() != PaymentStatusEnum.PROCESSING) {
-            throw new InvalidPaymentStatusException(
-                    localizationService.getMessage("payment.invalid.status.cancel", payment.getStatus())
-            );
+            throw new InvalidPaymentStatusException();
         }
 
         payment.setStatus(PaymentStatusEnum.CANCELLED);
@@ -276,9 +267,7 @@ public class PaymentService implements IPaymentService {
 
         // Can only refund completed payments
         if (payment.getStatus() != PaymentStatusEnum.COMPLETED) {
-            throw new InvalidPaymentStatusException(
-                    localizationService.getMessage("payment.invalid.status.refund", payment.getStatus())
-            );
+            throw new InvalidPaymentStatusException();
         }
 
         // Mark as refunded

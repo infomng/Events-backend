@@ -19,7 +19,8 @@ public record JwtProperties(
 
     public record AccessToken(@NotBlank String secret,
                                @Min(900000) Long duration // minimum 7 days
-    ){}
+    ){
+    }
 
 }
 
