@@ -28,7 +28,7 @@ public interface IEventMapper {
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "country", ignore = true)
-    @Mapping(target = "priceCategories", source = "categories")
+    @Mapping(target = "priceCategories", source = "priceCategories")
     @Mapping(target = "status", constant = "DRAFT")
     Event toEntity(CreateEventCommandDto createEventCommandDto);
 }

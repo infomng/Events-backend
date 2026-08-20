@@ -47,9 +47,9 @@ public interface ICategoryService {
     CategoryDto getCategoryById(UUID id);
 
     /**
-     * Get all categories.
+     * Get all priceCategories.
      *
-     * @return list of all categories
+     * @return list of all priceCategories
      */
     List<CategoryDto> getAllCategories();
 }

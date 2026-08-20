@@ -11,6 +11,7 @@ import com.events.modules.category.exception.CategoryNotFoundException;
 import com.events.modules.category.repository.ICategoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,6 +83,7 @@ public class CategoryService implements ICategoryService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "CATEGORIES", key = "#id")
     public CategoryDto getCategoryById(UUID id) {
         log.debug("Fetching category with id: {}", id);
 
@@ -93,8 +95,9 @@ public class CategoryService implements ICategoryService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "CATEGORIES")
     public List<CategoryDto> getAllCategories() {
-        log.debug("Fetching all categories");
+        log.debug("Fetching all priceCategories");
 
         List<Category> categories = categoryRepository.findAll();
         return categoryMapper.toDtoList(categories);

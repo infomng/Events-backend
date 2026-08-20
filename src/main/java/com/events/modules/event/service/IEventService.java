@@ -35,6 +35,8 @@ public interface IEventService {
     void publishEvent(UUID eventId);
 
     List<String> getDefaultPriceCategories();
+
+    void saveAll(List<CreateEventCommandDto> events);
 }
 
 //TODO:void deleteEvent(Long id);

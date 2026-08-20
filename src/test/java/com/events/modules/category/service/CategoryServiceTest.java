@@ -238,7 +238,7 @@ class CategoryServiceTest {
     }
 
     @Test
-    @DisplayName("Should get all categories successfully")
+    @DisplayName("Should get all priceCategories successfully")
     void getAllCategories_ShouldReturnAllCategories() {
         // Given
         List<Category> categories = List.of(category);

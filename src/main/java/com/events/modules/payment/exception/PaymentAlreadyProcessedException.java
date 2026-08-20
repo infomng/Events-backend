@@ -1,7 +1,7 @@
 package com.events.modules.payment.exception;
 
 public class PaymentAlreadyProcessedException extends RuntimeException {
-    public PaymentAlreadyProcessedException(String message) {
-        super(message);
+    public PaymentAlreadyProcessedException() {
+        super("Payment already processed: ");
     }
 }
