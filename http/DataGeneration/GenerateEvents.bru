@@ -1,0 +1,15 @@
+meta {
+  name: GenerateEvents
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/data-generation
+  body: json
+  auth: none
+}
+
+body:json {
+  1000
+}
