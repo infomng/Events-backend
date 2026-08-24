@@ -1,0 +1,28 @@
+meta {
+  name: AddItemToCart
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/cart/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+body:json {
+  {
+    "eventId": "{{eventId}}",
+    "priceCategoryId": "{{priceCategoryId}}",
+    "quantity": 2
+  }
+}
+
+vars:pre-request {
+  eventId: 
+  priceCategoryId: 
+}
