@@ -32,19 +32,39 @@
 		<postgresql.version>42.7.7</postgresql.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
 		<lombok.version>1.18.38</lombok.version>
+        <lombok-mapstruct-binding-version>0.2.0</lombok-mapstruct-binding-version>
         <archunit-junit5.version>1.2.1</archunit-junit5.version>
         <springdoc-openapi-version>2.8.14</springdoc-openapi-version>
         <bucket4j-core-version>8.1.0</bucket4j-core-version>
+        <jacoco-version>0.8.11</jacoco-version>
+        <zxing-version>3.5.3</zxing-version>
+		<stripe-version>32.0.0</stripe-version>
+		<datafaker.version>2.4.2</datafaker.version>
 	</properties>
+
 	<dependencies>
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>core</artifactId>
+			<version>${zxing-version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.zxing</groupId>
+			<artifactId>javase</artifactId>
+			<version>${zxing-version}</version>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webflux</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -54,25 +74,40 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
-	<dependency>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-oauth2-client</artifactId>
-	</dependency>
+
+	    <dependency>
+		    <groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-client</artifactId>
+	    </dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+			<version>3.1.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
 			<version>${jsonwebtoken.version}</version>
 		</dependency>
+
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
 			<version>${jsonwebtoken.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId> <!-- or jjwt-gson if Gson is preferred -->
@@ -91,63 +126,87 @@
 			<scope>runtime</scope>
 			<optional>true</optional>
 		</dependency>
+
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>${postgresql.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<version>${lombok.version}</version>
 			<scope>provided</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
 		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
 			<version>${mapstruct.version}</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct-processor</artifactId>
 			<version>${mapstruct.version}</version>
 			<scope>provided</scope>
 		</dependency>
+
         <dependency>
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit-junit5</artifactId>
             <version>${archunit-junit5.version}</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>${springdoc-openapi-version}</version>
         </dependency>
+
         <dependency>
             <groupId>com.bucket4j</groupId>
             <artifactId>bucket4j-core</artifactId>
             <version>${bucket4j-core-version}</version>
         </dependency>
 
+		<dependency>
+			<groupId>com.stripe</groupId>
+			<artifactId>stripe-java</artifactId>
+			<version>${stripe-version}</version>
+		</dependency>
 
+		<dependency>
+			<groupId>net.datafaker</groupId>
+			<artifactId>datafaker</artifactId>
+			<version>${datafaker.version}</version>
+		</dependency>
 
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+		</dependency>
     </dependencies>
 
 	<build>
@@ -159,6 +218,9 @@
 				<configuration>
 					<source>${java.version}</source>
 					<target>${java.version}</target>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.springframework.boot</groupId>
@@ -175,9 +237,63 @@
 							<artifactId>lombok</artifactId>
 							<version>${lombok.version}</version>
 						</path>
+                        <path>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok-mapstruct-binding</artifactId>
+                        <version>${lombok-mapstruct-binding-version}</version>
+                    </path>
+
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.jacoco</groupId>-->
+<!--                <artifactId>jacoco-maven-plugin</artifactId>-->
+<!--                <version>${jacoco-version}</version>-->
+
+<!--                <executions>-->
+
+<!--                    &lt;!&ndash; 1. Instrumentation avant les tests &ndash;&gt;-->
+<!--                    <execution>-->
+<!--                        <goals>-->
+<!--                            <goal>prepare-agent</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+
+<!--                    &lt;!&ndash; 2. Génération du rapport &ndash;&gt;-->
+<!--                    <execution>-->
+<!--                        <id>report</id>-->
+<!--                        <phase>test</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>report</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+
+<!--                    &lt;!&ndash; 3. Vérification des seuils &ndash;&gt;-->
+<!--                    <execution>-->
+<!--                        <id>check</id>-->
+<!--                        <goals>-->
+<!--                            <goal>check</goal>-->
+<!--                        </goals>-->
+
+<!--                        <configuration>-->
+<!--                            <rules>-->
+<!--                                <rule>-->
+<!--                                    <element>METHOD</element>-->
+<!--                                    <limits>-->
+<!--                                        <limit>-->
+<!--                                            <counter>LINE</counter>-->
+<!--                                            <value>COVEREDRATIO</value>-->
+<!--                                            <minimum>0.80</minimum>-->
+<!--                                        </limit>-->
+<!--                                    </limits>-->
+<!--                                </rule>-->
+<!--                            </rules>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+
+<!--                </executions>-->
+<!--            </plugin>-->
 		</plugins>
 	</build>
 

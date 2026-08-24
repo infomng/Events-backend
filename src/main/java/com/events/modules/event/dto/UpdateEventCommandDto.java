@@ -1,8 +1,11 @@
 package com.events.modules.event.dto;
 
 import com.events.modules.event.enumeration.EventStatusEnum;
+import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 public record UpdateEventCommandDto(
         String name,
@@ -16,6 +19,8 @@ public record UpdateEventCommandDto(
         LocalDateTime ticketSalesEndDate,
         Integer totalTickets,
         Double ticketPrice,
-        EventStatusEnum status
+        EventStatusEnum status,
+        @Valid List<PriceCategoryDto> categories,
+        UUID categoryId
 ) {}
 

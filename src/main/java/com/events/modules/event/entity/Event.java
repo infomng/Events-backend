@@ -1,45 +1,78 @@
 package com.events.modules.event.entity;
 
 import com.events.common.abstraction.AuditableEntity;
+import com.events.modules.category.entity.Category;
+import com.events.modules.country.entity.Country;
+import com.events.modules.event.entity.aggregate.Image;
+import com.events.modules.event.entity.aggregate.PriceCategory;
+import com.events.modules.event.entity.aggregate.Seat;
 import com.events.modules.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import com.events.modules.event.enumeration.EventStatusEnum;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "EVENTS")
+@Table(name = "EVENTS",
+        uniqueConstraints = @UniqueConstraint(
+                columnNames = {
+                        "organizer_id",
+                        "name",
+                        "start_date",
+                        "location"
+                }
+        ))
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @SuperBuilder
 public class Event extends AuditableEntity {
 
-    private String name;
-    private String description;
-    private Boolean isPublic;
-    private Boolean isFree;
-    private Boolean isFreeEntry;
-
-    private String invitationCode;
     @Column(nullable = false)
-    private String location;
+    private String name;
+
+    @Column(nullable = false)
+    private String description;
+
+    @Column(nullable = false)
+    private Boolean isPublic;
+
+    @Column(nullable = false)
+    private Boolean isFeatured;
+
+    @Column(nullable = false)
+    private Boolean hasInvitationCode;
+
     private Double latitude;
     private Double longitude;
 
     @Column(nullable = false)
+    private LocalDateTime ticketSalesStartDate;
+    private LocalDateTime ticketSalesEndDate;
+
+    @Column(nullable = false)
+    private Boolean hasSeats;
+
+    @Column(nullable = false)
+    private Boolean isTicketSalesActive;
+
+    @Column(nullable = false)
+    private String location;
+
+    @Column(nullable = false)
     private LocalDateTime startDate;
+
     @Column(nullable = false)
     private LocalDateTime endDate;
+
+    @Setter(AccessLevel.NONE)
     private Integer totalTickets;
 
+    @Setter(AccessLevel.NONE)
     private Integer availableTickets;
-    private Double price;
-    private Boolean hasSits;
-    private LocalDateTime ticketSalesStartDate;
 
-    private LocalDateTime ticketSalesEndDate;
     @Enumerated(EnumType.STRING)
     private EventStatusEnum status;
 
@@ -62,18 +95,52 @@ public class Event extends AuditableEntity {
     @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Seat> seats;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organizer_id")
     private User organizer;
 
-    public boolean hasAvailableTickets() {
-        return availableTickets != null && availableTickets > 0;
+    @Builder.Default
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Image> images = new HashSet<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PriceCategory> priceCategories = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
+
+    @ManyToOne
+    @JoinColumn(name = "country_id")
+    private Country country;
+
+    @PrePersist
+    @PreUpdate
+    private void compute() {
+        computeAvailableTickets();
+        computeTotalTickets();
+        isTicketSalesActive();
     }
 
-    public boolean isTicketSalesActive() {
-        LocalDateTime now = LocalDateTime.now();
-        return (ticketSalesStartDate == null || now.isAfter(ticketSalesStartDate)) &&
-               (ticketSalesEndDate == null || now.isBefore(ticketSalesEndDate));
+    private void computeAvailableTickets() {
+        this.availableTickets = priceCategories.stream()
+                .mapToInt(PriceCategory::getAvailableTickets)
+                .sum();
     }
+
+    private void computeTotalTickets() {
+        this.totalTickets = priceCategories.stream()
+                .mapToInt(PriceCategory::getTotalTickets)
+                .sum();
+    }
+
+    private void isTicketSalesActive() {
+        LocalDateTime now = LocalDateTime.now();
+        this.isTicketSalesActive = (ticketSalesStartDate == null || now.isAfter(ticketSalesStartDate)) &&
+                (ticketSalesEndDate == null || now.isBefore(ticketSalesEndDate));
+    }
+
+
 
 }

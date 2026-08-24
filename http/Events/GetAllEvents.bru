@@ -1,0 +1,18 @@
+meta {
+  name: GetAllEvents
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{host}}/events/all?page=1&size=10&sort=DESC&country=
+  body: none
+  auth: inherit
+}
+
+params:query {
+  page: 1
+  size: 10
+  sort: DESC
+  country: 
+}

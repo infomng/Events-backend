@@ -1,0 +1,18 @@
+meta {
+  name: UpdateCategory
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{host}}/categories/550e8400-e29b-41d4-a716-446655440000
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "Music & Entertainment",
+    "description": "Music events, concerts, and entertainment shows"
+  }
+}

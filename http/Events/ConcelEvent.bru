@@ -1,0 +1,15 @@
+meta {
+  name: ConcelEvent
+  type: http
+  seq: 14
+}
+
+patch {
+  url: {{host}}/events/b47fc6b9-60be-4efc-926c-e0c856dd0af9/cancel
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  eventId: 
+}

@@ -21,15 +21,15 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @SuperBuilder
-public abstract class AuditableEntity extends BaseEntity{
+public abstract class AuditableEntity extends BaseEntity {
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdDate;
+    private LocalDateTime createdAt;
 
     @LastModifiedDate
     @Column(nullable = false)
-    private LocalDateTime lastModifiedDate;
+    private LocalDateTime updatedAt;
 
     @CreatedBy
     @Column(updatable = false)
@@ -37,6 +37,6 @@ public abstract class AuditableEntity extends BaseEntity{
 
     @LastModifiedBy
     @Column
-    private String lastModifiedBy;
+    private String updatedBy;
 
 }

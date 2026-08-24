@@ -1,0 +1,20 @@
+meta {
+  name: Get My Payments
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{host}}/payments/my-payments?page=0&size=10
+  body: none
+  auth: bearer
+}
+
+params:query {
+  page: 0
+  size: 10
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}

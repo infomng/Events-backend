@@ -1,12 +1,13 @@
 package com.events.modules.auth.refreshtoken.service;
 
 import com.events.modules.auth.dto.AccessTokenDto;
-import com.events.modules.auth.refreshtoken.dto.RefreshTokenResponseDto;
-import jakarta.servlet.http.HttpServletRequest;
+import com.events.modules.auth.refreshtoken.dto.RefreshTokenDto;
 
 public interface IRefreshTokenService {
 
-    RefreshTokenResponseDto createRefreshToken(String token);
+    RefreshTokenDto createRefreshToken(String token);
 
-    AccessTokenDto getAccessToken(HttpServletRequest request);
+    AccessTokenDto getAccessToken(String refreshToken);
+
+    void deleteRefreshToken(String refreshToken);
 }

@@ -16,7 +16,11 @@ auth:basic {
 }
 
 script:post-response {
-  if(res.body.value.access_token) {
-    bru.setVar('access_token_set_by_collection_script', res.body.value.access_token);
-     }
+  const headers = res.getHeaders();
+  
+  const setCookie = headers["set-cookie"];
+  
+  if (setCookie) {
+    bru.setVar("access_token_cookie", setCookie);
+  }
 }

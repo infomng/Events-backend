@@ -1,21 +1,16 @@
 package com.events.common.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum UrlsEnum {
-    LOGIN("/auth/login"),
-    REGISTER("/auth/register"),
-    DASHBOARD("/auth/dashboard"),
-    PROFILE("/auth/profile"),
-    LOGOUT("/auth/logout"),
-    VERIFY_EMAIL("/auth/verify-email"),
-    RESET_PASSWORD("/auth/reset-password");
+    VERIFY_EMAIL("/verify-email"),
+    RESET_PASSWORD_FRONT_END_PATH("/reset-password");
 
     private final String path;
 
     UrlsEnum(String path) {
-        this.path = "/api/v1" + path;
+        this.path = path;
     }
 
-    public String getPath() {
-        return path;
-    }
 }

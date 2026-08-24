@@ -13,7 +13,7 @@ import com.events.modules.user.dto.mapper.IUserMapper;
 import com.events.modules.user.enumeration.RoleEnum;
 import com.events.modules.auth.exception.EmailAlreadyExistException;
 import com.events.modules.auth.exception.UserNotFoundException;
-import com.events.modules.auth.service.mail.IMailService;
+import com.events.common.mail.IMailService;
 import com.events.modules.auth.service.jwt.IJwtService;
 import com.events.common.exception.BadRequestException;
 import com.events.modules.user.entity.User;
@@ -21,6 +21,7 @@ import com.events.modules.user.entity.User;
 import com.events.modules.user.service.IUserService;
 import lombok.RequiredArgsConstructor;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.REQUIRED)
@@ -120,11 +122,10 @@ public class AuthService implements IAuthService {
                     new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 
+
         User user = userService.findByEmail(request.email());
 
-        String jwt = jwtService.generateAccessToken(user);
-
-        return AccessTokenDto.builder().access_token(jwt).build();
+        return jwtService.generateAccessToken(user);
     }
 
     @Override

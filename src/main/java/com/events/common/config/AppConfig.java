@@ -14,6 +14,8 @@ import org.springframework.context.annotation.Configuration;
         AppProperties.class,
         SupabaseProperties.class,
         ServerProperties.class,
+        RedisProperties.class,
+        CacheProperties.class
 })
 public class AppConfig {
 }

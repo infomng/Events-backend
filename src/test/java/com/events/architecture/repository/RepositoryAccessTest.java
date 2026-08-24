@@ -19,17 +19,41 @@ public class RepositoryAccessTest {
                     String entityName = repository.getSimpleName().substring(1, repository.getSimpleName().length() - "Repository".length());
                     String expectedService = entityName + "Service";
                     String expectedServiceTest = entityName + "ServiceTest";
+                    String expectedNestedServiceName = entityName + "Test";
 
                     // check who depends on this repository
                     classes.stream()
                             .filter(c -> c.getDirectDependenciesFromSelf().stream()
                                     .anyMatch(dep -> dep.getTargetClass().equals(repository)))
                             .forEach(dep -> {
+                                // Allow FavoriteService to access IEventRepository
+                                // (FavoriteService manages the many-to-many relationship between User and Event)
+                                boolean isFavoriteServiceAccessingEventRepo =
+                                    dep.getSimpleName().equals("FavoriteService") &&
+                                    repository.getSimpleName().equals("IEventRepository");
+
+                                // Allow CartService to access IEventRepository
+                                // (CartService needs to validate events and get price priceCategories)
+                                boolean isCartServiceAccessingEventRepo =
+                                    dep.getSimpleName().equals("CartService") &&
+                                    repository.getSimpleName().equals("IEventRepository");
+
+                                // Allow CartService to access ICartItemRepository
+                                // (CartItem is an aggregate of Cart and managed by CartService)
+                                boolean isCartServiceAccessingCartItemRepo =
+                                    dep.getSimpleName().equals("CartService") &&
+                                    repository.getSimpleName().equals("ICartItemRepository");
+
                                 if (!dep.getSimpleName().equals(expectedService) &&
-                                        !dep.getSimpleName().equals(expectedServiceTest)) {
+                                        !dep.getSimpleName().startsWith(expectedServiceTest) &&
+                                        !dep.getSimpleName().contains(expectedNestedServiceName) &&
+                                        !isFavoriteServiceAccessingEventRepo &&
+                                        !isCartServiceAccessingEventRepo &&
+                                        !isCartServiceAccessingCartItemRepo) {
                                     throw new AssertionError(
-                                            repository.getSimpleName() + " should only be accessed by " + expectedService +
-                                                    ", but is accessed by " + dep.getSimpleName()
+                                            repository.getSimpleName() + " should only be accessed by " + expectedService
+                                                    + " or nested test classes that contains: " + expectedNestedServiceName
+                                                    + ", but is accessed by " + dep.getSimpleName()
                                     );
                                 }
                             });

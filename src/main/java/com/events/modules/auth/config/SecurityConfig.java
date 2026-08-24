@@ -3,9 +3,10 @@ package com.events.modules.auth.config;
 import com.events.common.config.properties.AppProperties;
 import com.events.common.config.properties.JwtProperties;
 import com.events.common.utils.contants.Constants;
+import com.events.modules.auth.dto.AccessTokenDto;
 import com.events.modules.auth.dto.RegisterCommandDto;
 import com.events.modules.auth.exception.ExceptionHandlerFilter;
-import com.events.modules.auth.refreshtoken.dto.RefreshTokenResponseDto;
+import com.events.modules.auth.refreshtoken.dto.RefreshTokenDto;
 import com.events.modules.auth.refreshtoken.service.IRefreshTokenService;
 import com.events.modules.auth.service.jwt.impl.JwtAuthenticationFilter;
 import com.events.modules.auth.service.jwt.impl.JwtService;
@@ -42,6 +43,12 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationConverter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
@@ -50,6 +57,8 @@ public class SecurityConfig {
 
     private static final String[] WHITE_LIST_URL = {
             "/api/v1/auth/**",
+            "/api/v1/countries",
+            "/api/v1/countries/**",
             "/v2/api-docs",
             "/v3/api-docs",
             "/v3/api-docs/**",
@@ -90,6 +99,7 @@ public class SecurityConfig {
                         .authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -116,15 +126,27 @@ public class SecurityConfig {
                             }
 
                             User user = userService.findByEmail(email);
-                            String token = jwtService.generateAccessToken(user);
-                            RefreshTokenResponseDto refreshToken = refreshTokenService.createRefreshToken(email);
+                            AccessTokenDto accessTokenDto = jwtService.generateAccessToken(user);
 
-                            ResponseCookie cookie = SecurityUtils.getResponseCookie(refreshToken,
-                                    jwtProperties.refreshToken().duration());
+                            RefreshTokenDto refreshToken = refreshTokenService.createRefreshToken(email);
 
-                            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+                            ResponseCookie accessCookie = SecurityUtils
+                                    .getAccessTokenCookie(
+                                            accessTokenDto,
+                                            jwtProperties.accessToken().duration()
+                                    );
 
-                            response.sendRedirect(appProperties.frontendBaseUrl() + "/oauth-success?token=" + token);
+                            ResponseCookie refreshCookie = SecurityUtils
+                                    .getRefreshTokenCookie(
+                                            refreshToken,
+                                            jwtProperties.refreshToken().duration()
+                                    );
+
+                            response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+                            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+                            response.sendRedirect(appProperties.frontendUrl() + "/home");
+
+//                            response.sendRedirect(appProperties.frontendUrl() + "/oauth-success?token=" + token);
                         })
                 );
 
@@ -154,6 +176,20 @@ public class SecurityConfig {
     @Bean
     public AuthenticationConverter authenticationConverter() {
         return new BasicAuthenticationConverter();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 }
 
