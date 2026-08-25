@@ -30,7 +30,7 @@ public class ExceptionHandlerFilter extends OncePerRequestFilter {
             sendProblemDetailResponse(
                     HttpStatus.UNAUTHORIZED,
                     e.getClass().getSimpleName(),
-                    Constants.INVALID_OR_EXPIRED_TOKEN,
+                    Constants.INVALID_TOKEN,
                     response,
                     HttpServletResponse.SC_UNAUTHORIZED);
         }
@@ -42,6 +42,14 @@ public class ExceptionHandlerFilter extends OncePerRequestFilter {
                     Constants.TOO_MANY_REQUESTS,
                     response,
                     HttpStatus.TOO_MANY_REQUESTS.value());
+        }
+        catch (RuntimeException e) {
+            sendProblemDetailResponse(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    e.getClass().getSimpleName(),
+                    HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                    response,
+                    HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 

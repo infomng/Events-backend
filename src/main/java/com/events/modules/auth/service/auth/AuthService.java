@@ -143,7 +143,7 @@ public class AuthService implements IAuthService {
         String email = jwtService.extractUsername(request.token());
         User user = userService.findByEmail(email);
         if(user.getResetPasswordToken() == null || !user.getResetPasswordToken().equals(request.token())) {
-            throw new IllegalArgumentException(Constants.INVALID_OR_EXPIRED_TOKEN);
+            throw new IllegalArgumentException(Constants.INVALID_TOKEN);
         }
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         user.setResetPasswordToken(null);
