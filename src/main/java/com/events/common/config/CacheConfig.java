@@ -36,49 +36,33 @@ public class CacheConfig {
 //        return new ConcurrentMapCacheManager("CATEGORIES", "USER", "EVENT", "EVENTS");
 //    }
 
+        @Bean
+        RedisCacheManager cacheManager(RedisConnectionFactory factory) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+            objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-    @Bean
-    RedisCacheManager cacheManager(RedisConnectionFactory factory) {
-        return RedisCacheManager.builder(factory)
-                .cacheDefaults(RedisCacheConfiguration.defaultCacheConfig())
-                .build();
-    }
+            objectMapper.activateDefaultTyping(
+                    BasicPolymorphicTypeValidator.builder()
+                            .allowIfSubType("com.events")
+                            .build(),
+                    ObjectMapper.DefaultTyping.NON_FINAL,
+                    JsonTypeInfo.As.PROPERTY
+            );
 
-    /**
-     * Configure cache manager with event search cache.
-     * For production, consider using Redis or Caffeine with TTL support.
-     */
-//    @Bean
-//    public RedisCacheManager cacheManager(RedisConnectionFactory factory) {
-//
-//        ObjectMapper redisMapper = new ObjectMapper();
-//
-//        redisMapper.registerModule(new JavaTimeModule());
-//        redisMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-//
-//        redisMapper.activateDefaultTyping(
-//                BasicPolymorphicTypeValidator.builder()
-//                        .allowIfSubType("com.events")
-//                        .build(),
-//                ObjectMapper.DefaultTyping.NON_FINAL,
-//                JsonTypeInfo.As.WRAPPER_OBJECT);
-//
-//        GenericJackson2JsonRedisSerializer serializer =
-//                new GenericJackson2JsonRedisSerializer(redisMapper);
-//
-//
-//        RedisCacheConfiguration config =
-//                RedisCacheConfiguration.defaultCacheConfig()
-//                        .entryTtl(Duration.ofMinutes(10))
-//                        .serializeValuesWith(
-//                                RedisSerializationContext.SerializationPair
-//                                        .fromSerializer(serializer)
-//                        );
-//
-//        return RedisCacheManager.builder(factory)
-//                .cacheDefaults(config)
-//                .build();
-//    }
+            GenericJackson2JsonRedisSerializer serializer =
+                    new GenericJackson2JsonRedisSerializer(objectMapper);
+
+            RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+                    .entryTtl(Duration.ofMinutes(10))
+                    .serializeValuesWith(
+                            RedisSerializationContext.SerializationPair.fromSerializer(serializer)
+                    );
+
+            return RedisCacheManager.builder(factory)
+                    .cacheDefaults(config)
+                    .build();
+        }
 
 //    @Bean
 //    public RedisTemplate<String, Object> redisTemplate(

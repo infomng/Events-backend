@@ -6,9 +6,9 @@ import com.events.modules.auth.service.auth.IAuthService;
 import com.events.modules.auth.service.jwt.impl.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.AuthenticationConverter;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 
@@ -22,22 +22,22 @@ public abstract class ControllerTestContext {
 
     // ===== Common security & auth mocks =====
 
-    @MockBean
+    @MockitoBean
     protected IAuthService authService;
 
-    @MockBean
+    @MockitoBean
     protected IRefreshTokenService refreshTokenService;
 
-    @MockBean
+    @MockitoBean
     protected JwtProperties jwtProperties;
 
-    @MockBean
+    @MockitoBean
     protected JwtService jwtService;
 
-    @MockBean
+    @MockitoBean
     protected UserDetailsService userDetailsService;
 
-    @MockBean
+    @MockitoBean
     protected AuthenticationConverter authenticationConverter;
 
     // ===== Utilities =====

@@ -99,7 +99,12 @@ public class GlobalExceptionHandler {
                 .body(EmptyResult.failure(detail));
     }
 
-    @ExceptionHandler({EventNotFoundException.class, CategoryNotFoundException.class, CountryNotFoundException.class, CartNotFoundException.class, CartItemNotFoundException.class, PaymentNotFoundException.class})
+    @ExceptionHandler({EventNotFoundException.class,
+            CategoryNotFoundException.class,
+            CountryNotFoundException.class,
+            CartNotFoundException.class,
+            CartItemNotFoundException.class,
+            PaymentNotFoundException.class})
     public ResponseEntity<EmptyResult> handleNotFound(RuntimeException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
         detail.setTitle(ex.getClass().getSimpleName());
