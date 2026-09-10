@@ -41,7 +41,7 @@ package com.events.common.utils.contants;
         public static final String ANONYMOUS_USER = "anonymousUser";
         public static final String USER_NOT_AUTHENTICATED = "User not authenticated";
         public static final String TOKEN_CANNOT_BE_NULL_OR_EMPTY = "Token cannot be null or empty";
-        public static final String INVALID_OR_EXPIRED_TOKEN = "Invalid or expired token";
+        public static final String INVALID_TOKEN = "Invalid token";
 
         // User / Account messages
         public static final String EMAIL = "email";
@@ -85,6 +85,9 @@ package com.events.common.utils.contants;
         public static final String JOHN_DOE_EMAIL = "john.doe@example.com";
         public static final String JOHN_DOE_PASSWORD = "Mvxvxicavxvxcvcsavxvnoestuvxccasa123@#";
         public static final String TEST_MESSAGE = "This is a test message.";
+
+
+        public static final int MAXIMUM_NUMBER_OF_IMAGES = 3;
 
         private Constants() {}
     }

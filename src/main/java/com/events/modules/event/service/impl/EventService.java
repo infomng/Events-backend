@@ -1,5 +1,6 @@
 package com.events.modules.event.service.impl;
 
+import com.events.common.dto.pagination.PageResponse;
 import com.events.common.supabase.service.ISupabaseStorageService;
 import com.events.common.utils.contants.Constants;
 import com.events.modules.auth.service.auth.IAuthService;
@@ -23,6 +24,7 @@ import com.events.modules.event.exception.EventForbidenException;
 import com.events.modules.event.exception.EventNotFoundException;
 import com.events.modules.event.dto.mapper.IEventMapper;
 import com.events.modules.event.dto.mapper.IEventSearchMapper;
+import com.events.modules.event.exception.MaximumNumberOfImageException;
 import com.events.modules.event.repository.IEventRepository;
 import com.events.modules.event.service.IEventService;
 import com.events.modules.event.dto.mapper.IPriceCategoryMapper;
@@ -30,6 +32,7 @@ import com.events.modules.event.specification.EventSpecifications;
 import com.events.modules.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
@@ -43,11 +46,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -108,8 +107,8 @@ public class EventService implements IEventService {
         Event event = eventRepository.findByIdAndOrganizerId(eventId, currentUser.getId())
                 .orElseThrow(() -> new EventNotFoundException(eventId));
 
-        if(event.getImages().size() >  10){
-            throw new BadRequestException("Maximum number of images reached for this event");
+        if(event.getImages().size() >  Constants.MAXIMUM_NUMBER_OF_IMAGES){
+            throw new MaximumNumberOfImageException(Constants.MAXIMUM_NUMBER_OF_IMAGES);
         }
 
         List<String> imagesUrls = supabaseStorageService.uploadFiles(files);
@@ -125,16 +124,25 @@ public class EventService implements IEventService {
     }
 
     @Override
-    public Page<GetEventDto> getAllEvents(int page, int size, String country) {
+    @Cacheable(value = "EVENTS", key = "#page + '-' + #size + '-' + #country")
+    public PageResponse<GetEventDto> getAllEvents(int page, int size, String country) {
         Pageable pageable = PageRequest.of(page, size);
-        var eventsList =  eventRepository.findAll(pageable);
+        Page<Event> eventsList = eventRepository.findAll(pageable);
 
         var eventsListDto = eventsList.map(eventMapper::toDto).toList();
 
-        return new PageImpl<>(eventsListDto);
+        return PageResponse.<GetEventDto>builder()
+                .page(page)
+                .size(size)
+                .totalElements(eventsList.getTotalElements())
+                .totalPages(eventsList.getTotalPages())
+                .last(eventsList.isLast())
+                .content(eventsListDto).build();
+
     }
 
     @Override
+    @Cacheable(value = "EVENT", key = "#id")
     public GetEventDto getEventById(UUID id) {
         return eventRepository.findById(id)
                 .map(eventMapper::toDto)
@@ -148,8 +156,8 @@ public class EventService implements IEventService {
     }
 
     @Override
-    @CacheEvict(value = "eventSearch", allEntries = true)
-    public void updateEvent(UUID id, UpdateEventCommandDto command) {
+    @CachePut(value = "EVENT", key = "#id")
+    public GetEventDto updateEvent(UUID id, UpdateEventCommandDto command) {
         User currentUser = authService.getCurrentUser();
 
         Event event = eventRepository.findById(id)
@@ -160,6 +168,8 @@ public class EventService implements IEventService {
         }
 
         updateEvent(command, event);
+        eventRepository.save(event);
+        return eventMapper.toDto(event);
     }
 
     @Override
@@ -195,27 +205,19 @@ public class EventService implements IEventService {
     }
 
     private void updateEvent(UpdateEventCommandDto command, Event event) {
-        if(command.totalTickets() < event.getAvailableTickets()) {
+        if(command.totalTickets() != null && command.totalTickets() < event.getAvailableTickets()) {
             throw new BadRequestException("Total tickets cannot be less than available tickets");
         }
 
-        if (command.startDate().isAfter(command.endDate())) {
+        if (command.startDate() != null && command.startDate().isAfter(command.endDate())) {
             throw new BadRequestException("Start date cannot be after end date");
         }
 
-        if (command.ticketSalesStartDate().isAfter(command.ticketSalesEndDate())) {
+        if (command.ticketSalesStartDate() != null && command.ticketSalesStartDate().isAfter(command.ticketSalesEndDate())) {
             throw new BadRequestException("Ticket sales start date cannot be after end date");
         }
 
-        event.setName(command.name());
-        event.setDescription(command.description());
-        event.setLocation(command.location());
-        event.setStartDate(command.startDate());
-        event.setTicketSalesStartDate(command.ticketSalesStartDate());
-        event.setTicketSalesEndDate(command.ticketSalesEndDate());
-        event.setStatus(command.status());
-        event.setLatitude(command.latitude());
-        event.setLongitude(command.longitude());
+        eventMapper.updateEvent(command, event);
 
         // Update category if provided
         if (command.categoryId() != null) {
@@ -237,6 +239,7 @@ public class EventService implements IEventService {
     }
 
     @Override
+    @CacheEvict(value = "EVENT", key = "#id")
     public void softDeleteEvent(UUID eventId) {
         User currentUser = authService.getCurrentUser();
 
@@ -267,7 +270,6 @@ public class EventService implements IEventService {
     }
 
     @Override
-    @CacheEvict(value = "eventSearch", allEntries = true)
     public void publishEvent(UUID eventId) {
         User currentUser = authService.getCurrentUser();
 
@@ -289,13 +291,22 @@ public class EventService implements IEventService {
     }
 
     @Override
+    public void saveAll(List<CreateEventCommandDto> events) {
+        List<Event> eventEntities = events.stream()
+                .map(eventMapper::toEntity)
+                .toList();
+
+        eventRepository.saveAll(eventEntities);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     @Cacheable(
             value = "eventSearch",
             key = "#criteria.toString() + '_' + #pageable.pageNumber + '_' + #pageable.pageSize",
             condition = "#criteria.isPublic() == true && #pageable.pageNumber == 0"
     )
-    public Page<GetEventDto> getEvents(EventSearchCriteriaDto criteria, Pageable pageable) {
+    public PageResponse<GetEventDto> getEvents(EventSearchCriteriaDto criteria, Pageable pageable) {
         log.debug("Searching events with criteria: {}", criteria);
 
         Specification<Event> spec = buildSpecification(criteria);
@@ -303,7 +314,13 @@ public class EventService implements IEventService {
 
         List<GetEventDto> eventDtoList = eventMapper.toDtoList(events.getContent());
 
-        return new PageImpl<>(eventDtoList, pageable, events.getTotalElements());
+        return PageResponse.<GetEventDto>builder()
+                .content(eventDtoList)
+                .totalElements(events.getTotalElements())
+                .totalPages(events.getTotalPages())
+                .size(events.getNumber())
+                .last(events.isLast())
+                .build();
     }
 
     @Override

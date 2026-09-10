@@ -1,4 +1,4 @@
-package com.events.common.dto;
+package com.events.common.dto.pagination;
 
 import jakarta.validation.constraints.Min;
 

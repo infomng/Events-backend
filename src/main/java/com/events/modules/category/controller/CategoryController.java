@@ -25,7 +25,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/categories")
 @RequiredArgsConstructor
-@Tag(name = "Category Management", description = "Admin endpoints for managing event categories")
+@Tag(name = "Category Management", description = "Admin endpoints for managing event priceCategories")
 @SecurityRequirement(name = "bearerAuth")
 public class CategoryController {
 
@@ -66,7 +66,7 @@ public class CategoryController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all categories", description = "Retrieve all categories (ADMIN only)")
+    @Operation(summary = "Get all priceCategories", description = "Retrieve all priceCategories (ADMIN only)")
     public ResponseEntity<Result<List<CategoryDto>>> getAllCategories() {
         List<CategoryDto> categories = categoryService.getAllCategories();
         return ResponseEntity.ok(Result.success(categories));

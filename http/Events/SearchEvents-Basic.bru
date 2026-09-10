@@ -1,11 +1,11 @@
 meta {
   name: SearchEvents-Basic
   type: http
-  seq: 15
+  seq: 14
 }
 
 get {
-  url: {{host}}/events/search?page=0&size=20&sortBy=startDate&sortDirection=ASC
+  url: {{host}}/events?page=0&size=20&sortBy=startDate&sortDirection=ASC
   body: none
   auth: inherit
 }

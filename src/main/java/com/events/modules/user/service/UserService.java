@@ -2,24 +2,17 @@ package com.events.modules.user.service;
 
 import com.events.modules.auth.dto.RegisterCommandDto;
 import com.events.modules.auth.exception.UserNotFoundException;
-import com.events.modules.auth.service.auth.IAuthService;
-import com.events.modules.event.entity.Event;
-import com.events.modules.favorite.exception.FavoriteAlreadyExistsException;
-import com.events.modules.favorite.exception.FavoriteNotFoundException;
 import com.events.modules.user.entity.User;
 import com.events.modules.user.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Lazy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-
+@Slf4j
 @Service
 @Primary
 @Transactional
@@ -52,6 +45,7 @@ public class UserService implements IUserService {
 
     @Override
     public boolean existsByEmail(String email) {
+        log.debug("Checking if user with email: {} exists", email);
         return userRepository.existByEmail(email);
     }
 

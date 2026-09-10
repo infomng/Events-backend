@@ -5,7 +5,7 @@ import com.events.modules.event.service.IEventService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 
 import java.util.UUID;
@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 public class EventControllerTest extends ControllerTestContext {
 
-    @MockBean
+    @MockitoBean
     private IEventService eventService;
 
     @Test

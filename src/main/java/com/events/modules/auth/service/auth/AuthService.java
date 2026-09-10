@@ -21,6 +21,7 @@ import com.events.modules.user.entity.User;
 import com.events.modules.user.service.IUserService;
 import lombok.RequiredArgsConstructor;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(propagation = Propagation.REQUIRED)
@@ -120,6 +122,7 @@ public class AuthService implements IAuthService {
                     new UsernamePasswordAuthenticationToken(request.email(), request.password())
         );
 
+
         User user = userService.findByEmail(request.email());
 
         return jwtService.generateAccessToken(user);
@@ -140,7 +143,7 @@ public class AuthService implements IAuthService {
         String email = jwtService.extractUsername(request.token());
         User user = userService.findByEmail(email);
         if(user.getResetPasswordToken() == null || !user.getResetPasswordToken().equals(request.token())) {
-            throw new IllegalArgumentException(Constants.INVALID_OR_EXPIRED_TOKEN);
+            throw new IllegalArgumentException(Constants.INVALID_TOKEN);
         }
         user.setPassword(passwordEncoder.encode(request.newPassword()));
         user.setResetPasswordToken(null);

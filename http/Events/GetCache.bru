@@ -1,0 +1,19 @@
+meta {
+  name: GetCache
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{host}}/cache?name=EVENT
+  body: none
+  auth: none
+}
+
+params:query {
+  name: EVENT
+}
+
+vars:pre-request {
+  eventId: 
+}

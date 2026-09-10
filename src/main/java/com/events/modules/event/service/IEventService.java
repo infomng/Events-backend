@@ -1,5 +1,6 @@
 package com.events.modules.event.service;
 
+import com.events.common.dto.pagination.PageResponse;
 import com.events.modules.event.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +14,7 @@ public interface IEventService {
     UUID createEvent(CreateEventCommandDto command);
     List<String> uploadEventImages(UUID eventId, MultipartFile[] files) throws IOException;
 
-    Page<GetEventDto> getAllEvents(int page, int size, String country);
+    PageResponse<GetEventDto> getAllEvents(int page, int size, String country);
     GetEventDto getEventById(UUID id);
     List<GetEventDto> getEventsNearby(Double lat, Double lon, Double radiusInMeters);
     List<GetEventDto> getAllIncomingEvents();
@@ -24,17 +25,19 @@ public interface IEventService {
      * @param pageable pagination and sorting parameters
      * @return paginated search results
      */
-    Page<GetEventDto> getEvents(EventSearchCriteriaDto criteria, Pageable pageable);
+    PageResponse<GetEventDto> getEvents(EventSearchCriteriaDto criteria, Pageable pageable);
     Boolean existById(UUID id);
     List<GetEventDto> getAllByIds(List<UUID> ids);
 
-    void updateEvent(UUID id, UpdateEventCommandDto command);
+    GetEventDto updateEvent(UUID id, UpdateEventCommandDto command);
     void generateSeatsForEvent(UUID id, List<GenerateSeatDto> seatNumbers);
     void softDeleteEvent(UUID eventId);
     void cancelEvent(UUID eventId);
     void publishEvent(UUID eventId);
 
     List<String> getDefaultPriceCategories();
+
+    void saveAll(List<CreateEventCommandDto> events);
 }
 
 //TODO:void deleteEvent(Long id);

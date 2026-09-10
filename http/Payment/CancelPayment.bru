@@ -1,0 +1,19 @@
+meta {
+  name: Cancel Payment
+  type: http
+  seq: 7
+}
+
+delete {
+  url: {{host}}/payments/{{paymentId}}/cancel
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{ACCESS_TOKEN}}
+}
+
+vars:pre-request {
+  paymentId:
+}
