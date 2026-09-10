@@ -10,7 +10,7 @@ public class EventSpecification {
         return (root, query, cb) -> {
             var predicates = cb.conjunction();
 
-            if (filter.name() != null && !filter.name().isEmpty()) {
+            if (!filter.name().isBlank()) {
                 predicates = cb.and(predicates,
                         cb.like(cb.lower(root.get(Constants.NAME)), "%" + filter.name().toLowerCase() + "%"));
             }

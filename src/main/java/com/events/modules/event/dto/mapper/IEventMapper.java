@@ -4,6 +4,7 @@ package com.events.modules.event.dto.mapper;
 import com.events.modules.category.dto.mapper.ICategoryMapper;
 import com.events.modules.country.dto.mapper.ICountryMapper;
 import com.events.modules.event.dto.CreateEventCommandDto;
+import com.events.modules.event.dto.UpdateEventCommandDto;
 import com.events.modules.event.entity.Event;
 import com.events.modules.event.dto.GetEventDto;
 
@@ -13,12 +14,18 @@ import java.util.List;
 
 @Mapper(componentModel = "spring",
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
         uses = {IPriceCategoryMapper.class, IImageMapper.class, ICountryMapper.class, ICategoryMapper.class})
 public interface IEventMapper {
     @Mapping(source = "organizer.id", target = "organizerId")
     GetEventDto toDto(Event event);
 
     List<GetEventDto> toDtoList(List<Event> events);
+
+    void updateEvent(
+            UpdateEventCommandDto command,
+            @MappingTarget Event event
+    );
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "organizer", ignore = true)
