@@ -30,8 +30,6 @@ public class SupabaseStorageService implements ISupabaseStorageService {
     public SupabaseStorageService(SupabaseProperties properties) {
         this.properties = properties;
 
-        System.out.println(properties.serviceRoleKey());
-
         this.webClient = WebClient.builder()
                 .baseUrl(properties.projectUrl() + properties.storageObject())
                 .defaultHeader(Constants.AUTHORIZATION, Constants.BEARER + properties.serviceRoleKey())
