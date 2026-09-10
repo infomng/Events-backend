@@ -22,6 +22,8 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.time.Duration;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Spring Cache configuration.
@@ -42,16 +44,11 @@ public class CacheConfig {
             objectMapper.registerModule(new JavaTimeModule());
             objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-            objectMapper.activateDefaultTyping(
-                    BasicPolymorphicTypeValidator.builder()
-                            .allowIfSubType("com.events")
-                            .build(),
-                    ObjectMapper.DefaultTyping.NON_FINAL,
-                    JsonTypeInfo.As.PROPERTY
-            );
-
             GenericJackson2JsonRedisSerializer serializer =
-                    new GenericJackson2JsonRedisSerializer(objectMapper);
+                    GenericJackson2JsonRedisSerializer.builder()
+                            .objectMapper(objectMapper)
+                            .defaultTyping(true)
+                            .build();
 
             RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
                     .entryTtl(Duration.ofMinutes(10))

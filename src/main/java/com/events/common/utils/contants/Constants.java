@@ -86,5 +86,8 @@ package com.events.common.utils.contants;
         public static final String JOHN_DOE_PASSWORD = "Mvxvxicavxvxcvcsavxvnoestuvxccasa123@#";
         public static final String TEST_MESSAGE = "This is a test message.";
 
+
+        public static final int MAXIMUM_NUMBER_OF_IMAGES = 3;
+
         private Constants() {}
     }
