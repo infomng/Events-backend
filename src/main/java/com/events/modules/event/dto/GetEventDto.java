@@ -3,7 +3,6 @@ package com.events.modules.event.dto;
 import com.events.modules.category.dto.CategoryDto;
 import com.events.modules.country.dto.CountryDto;
 import com.events.modules.event.enumeration.EventStatusEnum;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -56,7 +55,7 @@ public record GetEventDto(
                           @NotNull
                           CountryDto country,
                           @NotEmpty
-                          List<PriceCategoryDto> priceCategories,
+                          List<GetPriceCategoryDto> priceCategories,
                           @NotEmpty
                           List<ImageDto> images
 ) {

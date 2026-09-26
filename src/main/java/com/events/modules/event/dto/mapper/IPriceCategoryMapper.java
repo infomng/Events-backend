@@ -1,6 +1,6 @@
 package com.events.modules.event.dto.mapper;
 
-import com.events.modules.event.dto.PriceCategoryDto;
+import com.events.modules.event.dto.CreatePriceCategoryDto;
 import com.events.modules.event.entity.aggregate.PriceCategory;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -13,13 +13,13 @@ unmappedTargetPolicy = ReportingPolicy.IGNORE
 )
 public interface IPriceCategoryMapper {
 
-    PriceCategoryDto toDto(PriceCategory priceCategory);
+    CreatePriceCategoryDto toDto(PriceCategory priceCategory);
 
-    List<PriceCategoryDto> toDtoList(List<PriceCategory> priceCategories);
+    List<CreatePriceCategoryDto> toDtoList(List<PriceCategory> priceCategories);
 
     @Mapping(target = "event", ignore = true)
     @Mapping(target = "availableTickets", source = "totalTickets")
-    PriceCategory toEntity(PriceCategoryDto priceCategoryDto);
+    PriceCategory toEntity(CreatePriceCategoryDto createPriceCategoryDto);
 
-    List<PriceCategory> toEntityList(List<PriceCategoryDto> priceCategoryDtos);
+    List<PriceCategory> toEntityList(List<CreatePriceCategoryDto> createPriceCategoryDtos);
 }

@@ -5,7 +5,7 @@ import com.events.common.result.Result;
 import com.events.common.utils.contants.Constants;
 import com.events.modules.cart.exception.CartItemNotFoundException;
 import com.events.modules.cart.exception.CartNotFoundException;
-import com.events.modules.cart.exception.InvalidQuantityException;
+import com.events.modules.cart.exception.NotEnoughQuantityException;
 import com.events.modules.category.exception.CategoryInUseException;
 import com.events.modules.category.exception.CategoryNotFoundException;
 import com.events.modules.country.exception.CountryInUseException;
@@ -115,7 +115,7 @@ public class GlobalExceptionHandler {
                 .body(EmptyResult.failure(detail));
     }
 
-    @ExceptionHandler({CategoryInUseException.class, CountryInUseException.class, FavoriteAlreadyExistsException.class, InvalidQuantityException.class, PaymentAlreadyProcessedException.class, InvalidPaymentStatusException.class, PaymentFailedException.class})
+    @ExceptionHandler({CategoryInUseException.class, CountryInUseException.class, FavoriteAlreadyExistsException.class, NotEnoughQuantityException.class, PaymentAlreadyProcessedException.class, InvalidPaymentStatusException.class, PaymentFailedException.class})
     public ResponseEntity<EmptyResult> handleInUse(RuntimeException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         detail.setTitle(ex.getClass().getSimpleName());

@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Builder
-public record PriceCategoryDto(
+public record CreatePriceCategoryDto(
     UUID id,
     @NotBlank(message = "Category name cannot be empty")
     String name,
