@@ -20,7 +20,7 @@ public record UpdateEventCommandDto(
         Integer totalTickets,
         Double ticketPrice,
         EventStatusEnum status,
-        @Valid List<PriceCategoryDto> categories,
+        @Valid List<CreatePriceCategoryDto> categories,
         UUID categoryId
 ) {}
 

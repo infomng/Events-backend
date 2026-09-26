@@ -6,6 +6,8 @@ import com.events.modules.user.entity.User;
 import com.events.modules.user.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +23,7 @@ public class UserService implements IUserService {
     private final IUserRepository userRepository;
 
     @Override
+    @CacheEvict(value = "user", key = "'existsByEmail:' + #command.email()")
     public void createUser(RegisterCommandDto command) {
        User user = User.builder()
            .fullName(command.fullName())
@@ -39,17 +42,20 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "user" , key = "'existsByEmail:' + #email")
     public User findByEmail(String email) {
         return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
     }
 
     @Override
+    @Cacheable(value = "user" , key = "'existsByEmail:' + #email")
     public boolean existsByEmail(String email) {
         log.debug("Checking if user with email: {} exists", email);
         return userRepository.existByEmail(email);
     }
 
     @Override
+    @Cacheable(value = "user" , key = "'findById:' + #userId")
     public User findById(UUID userId) {
         return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
     }

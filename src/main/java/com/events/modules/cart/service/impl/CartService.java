@@ -7,18 +7,20 @@ import com.events.modules.cart.dto.GetCartDto;
 import com.events.modules.cart.dto.mapper.ICartMapper;
 import com.events.modules.cart.entity.Cart;
 import com.events.modules.cart.entity.CartItem;
+import com.events.modules.cart.exception.CartItemNotFoundException;
 import com.events.modules.cart.exception.CartNotFoundException;
-import com.events.modules.cart.exception.InvalidQuantityException;
+import com.events.modules.cart.exception.NotEnoughQuantityException;
+import com.events.modules.cart.exception.TooMuchQuantityException;
 import com.events.modules.cart.repository.ICartRepository;
 import com.events.modules.cart.service.ICartService;
-import com.events.modules.cart.service.cartitem.ICartItemService;
 import com.events.modules.event.dto.GetEventDto;
-import com.events.modules.event.dto.PriceCategoryDto;
+import com.events.modules.event.dto.GetPriceCategoryDto;
 import com.events.modules.event.exception.PriceCategoryNotFoundException;
 import com.events.modules.event.service.IEventService;
 import com.events.modules.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,45 +36,40 @@ public class CartService implements ICartService {
 
     private final ICartRepository cartRepository;
     private final IEventService eventService;
-    private final ICartItemService cartItemService;
     private final IAuthService authService;
     private final ICartMapper cartMapper;
 
     @Override
     public void addItemToCart(AddItemToCartDto addItemToCartDto) {
-        // Validate newQuantity
-        if (addItemToCartDto.quantity() == null || addItemToCartDto.quantity() < 1) {
-            throw new InvalidQuantityException();
-        }
 
-        User currentUser = authService.getCurrentUser();
+        User currentUser = getCurrentUser();
 
         // Get or create active cart
-        Cart cart = cartRepository.findByUserId(currentUser.getId())
-                .orElseGet(() -> createNewCart(currentUser.getId()));
+        Cart cart = getCartOrCreateCarByUserId(currentUser.getId());
 
         // Validate event exists
-        GetEventDto event = eventService.getEventById(addItemToCartDto.eventId());
+        GetEventDto event = getEventById(addItemToCartDto.eventId());
 
         // Validate price category exists for this event
-        PriceCategoryDto priceCategory = event.priceCategories().stream()
-                .filter(pc -> pc.id().equals(addItemToCartDto.priceCategoryId()))
-                .findFirst()
-                .orElseThrow(() -> new PriceCategoryNotFoundException(event.id()));
+        GetPriceCategoryDto priceCategory = getPriceCategory(addItemToCartDto.priceCategoryId(), event);
 
         // Check if item already exists in cart
-        Optional<CartItem> existingItem = cart.getItems()
-                .stream()
-                .filter(cartItem -> cartItem.getEventId().equals(addItemToCartDto.eventId())
-                        && cartItem.getPriceCategoryId().equals(addItemToCartDto.priceCategoryId()))
-                .findFirst();
+        Optional<CartItem> existingItem = getExistingCartItem(addItemToCartDto, cart);
+
+        int newQuantity = 0;
+        if (existingItem.isPresent()) {
+            newQuantity = computeNewQuantity(addItemToCartDto, existingItem.get());
+            // Validate newQuantity
+            validateNewQuantity(newQuantity, priceCategory.availableTickets());
+        }
 
         if (existingItem.isPresent()) {
             // Update newQuantity
-            CartItem item = existingItem.get();
-            item.setQuantity(item.getQuantity() + addItemToCartDto.quantity());
+            cart.updateItem(existingItem.get(), newQuantity);
+            cart.calculateTotalPrice();
             cartRepository.save(cart);
             log.info("Updated cart item newQuantity for event: {}", event.name());
+
         } else {
             // Create new cart item with snapshot data
             CartItem newItem = CartItem.builder()
@@ -82,58 +79,85 @@ public class CartService implements ICartService {
                     .priceCategoryName(priceCategory.name())
                     .quantity(addItemToCartDto.quantity())
                     .unitPrice(priceCategory.price())
+                    .totalPrice(priceCategory.price().multiply(BigDecimal.valueOf(addItemToCartDto.quantity())))
                     .build();
-
-            cart.addItem(newItem);
 
             cart.addItem(newItem);
             cartRepository.save(cart);
 
             log.info("Added new item to cart for event: {}", event.name());
         }
+    }
 
-        cartRepository.save(cart);
+    public void removeCartItem(UUID cartItemId){
+        User currentUser = getCurrentUser();
+        Cart cart = cartRepository.findByUserId(currentUser.getId()).orElseThrow(
+                () -> new CartNotFoundException(currentUser.getId()));
+
+        CartItem cartItem = cart.getItems().stream()
+                .filter(item -> item.getId().equals(cartItemId))
+                .findFirst()
+                .orElseThrow(() -> new CartItemNotFoundException(cartItemId));
+
+        cart.removeItem(cartItem);
+    }
+
+    private static int computeNewQuantity(AddItemToCartDto addItemToCartDto, CartItem existingItem) {
+        return existingItem.getQuantity() + addItemToCartDto.quantity();
+    }
+
+    private static @NonNull Optional<CartItem> getExistingCartItem(AddItemToCartDto addItemToCartDto, Cart cart) {
+        return cart.getItems()
+                .stream()
+                .filter(cartItem -> cartItem.getEventId().equals(addItemToCartDto.eventId())
+                        && cartItem.getPriceCategoryId().equals(addItemToCartDto.priceCategoryId()))
+                .findFirst();
+    }
+
+    private static @NonNull GetPriceCategoryDto getPriceCategory(UUID priceCategoryId, GetEventDto event) {
+        return event.priceCategories().stream()
+                .filter(pc -> pc.id().equals(priceCategoryId))
+                .findFirst()
+                .orElseThrow(() -> new PriceCategoryNotFoundException(event.id()));
+    }
+
+    private static void validateNewQuantity(int newQuantity, int availableTickets) {
+        if (newQuantity < 0) {
+            throw new NotEnoughQuantityException();
+        }
+
+        if (newQuantity > availableTickets) {
+            throw new TooMuchQuantityException();
+        }
+    }
+
+    private GetEventDto getEventById(UUID eventId) {
+        return eventService.getEventById(eventId);
+    }
+
+    private @NonNull Cart getCartOrCreateCarByUserId(UUID userId) {
+        return cartRepository.findByUserId(userId)
+                .orElseGet(() -> createNewCart(userId));
+    }
+
+    private User getCurrentUser() {
+        return authService.getCurrentUser();
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public GetCartDto getMyCart() {
-        User currentUser = authService.getCurrentUser();
+    @Transactional
+    public GetCartDto getCurrentUserCart() {
+        User currentUser = getCurrentUser();
 
-        Cart cart = cartRepository.findByUserId(currentUser.getId())
-                .orElseGet(() -> createNewCart(currentUser.getId()));
+        Cart cart = getCartOrCreateCarByUserId(currentUser.getId());
 
         return cartMapper.toDto(cart);
     }
 
-    @Override
-    public void removeItemFromCart(UUID cartItemId) {
-        cartItemService.deleteItem(cartItemId);
-        log.info("Removed item {} from cart", cartItemId);
-    }
-
-    @Override
-    public void updateCartItem(UpdateCartItemDto updateDto) {
-        if (updateDto.newQuantity() == null || updateDto.newQuantity() < 1) {
-            throw new InvalidQuantityException();
-        }
-
-        cartItemService.updateCartItem(updateDto);
-
-//        cartItem.setQuantity(updateDto.newQuantity());
-//        cartItemRepository.save(cartItem);
-//
-//        // Recalculate cart total
-//        Cart cart = cartItem.getCart();
-//        cart.calculateTotal();
-//        cartRepository.save(cart);
-
-        log.info("Updated cart item {} newQuantity to {}", updateDto.cartItemId(), updateDto.newQuantity());
-    }
 
     @Override
     public void clearCart() {
-        User currentUser = authService.getCurrentUser();
+        User currentUser = getCurrentUser();
 
         Cart cart = cartRepository.findByUserId(currentUser.getId())
                 .orElseThrow(() -> new CartNotFoundException(currentUser.getId()));
@@ -147,7 +171,7 @@ public class CartService implements ICartService {
     @Override
     @Transactional(readOnly = true)
     public Integer getCartItemsCount() {
-        User currentUser = authService.getCurrentUser();
+        User currentUser = getCurrentUser();
 
         return cartRepository.findByUserId(currentUser.getId())
                 .map(cart -> cart.getItems().size())
@@ -157,7 +181,7 @@ public class CartService implements ICartService {
     private Cart createNewCart(UUID userId) {
         Cart newCart = Cart.builder()
                 .userId(userId)
-                .total(BigDecimal.ZERO)
+                .totalPrice(BigDecimal.ZERO)
                 .build();
 
         return cartRepository.save(newCart);

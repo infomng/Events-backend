@@ -9,6 +9,7 @@ import java.util.UUID;
 @Builder
 public record GetCartDto(UUID id,
                          UUID userId,
+                         Integer totalItems,
                          BigDecimal totalPrice,
-                         List<GetCartItemDto> eventDtos) {
+                         List<GetCartItemDto> items) {
 }
