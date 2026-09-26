@@ -2,8 +2,7 @@ package com.events.modules.cart.entity;
 
 import com.events.common.abstraction.AuditableEntity;
 import com.events.modules.cart.enumeration.CartItemStatusEnum;
-import com.events.modules.cart.enumeration.CartStatusEnum;
-import com.events.modules.cart.exception.InvalidQuantityException;
+import com.events.modules.cart.exception.NotEnoughQuantityException;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -33,17 +32,19 @@ public class CartItem extends AuditableEntity {
     private String priceCategoryName; // snapshot du nom de la catégorie
 
     @Column(nullable = false)
-
-    private Integer quantity;
+    @Builder.Default
+    private Integer quantity = 0;
 
     @Column(nullable = false)
     private BigDecimal unitPrice;
 
     @Column(nullable = false)
-    private BigDecimal oldUnitPrice; // snapshot prix unitaire au moment de l'ajout
+    @Builder.Default
+    private BigDecimal oldUnitPrice = BigDecimal.ZERO; // snapshot prix unitaire au moment de l'ajout
 
     @Column(nullable = false)
-    private BigDecimal totalPrice; // prix total calculé
+    @Builder.Default
+    private BigDecimal totalPrice = BigDecimal.ZERO; // prix total calculé
 
     @Builder.Default
     @Column(nullable = false)
@@ -54,17 +55,6 @@ public class CartItem extends AuditableEntity {
     @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
 
-    @PrePersist
-    private void calculateTotalPrice() {
-        this.oldUnitPrice = this.unitPrice;
-        calculatePrice();
-    }
-
-    @PreUpdate
-    private void updateTotalPrice() {
-        calculatePrice();
-    }
-
     private void calculatePrice() {
         if (unitPrice != null && quantity != null) {
             totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
@@ -72,9 +62,10 @@ public class CartItem extends AuditableEntity {
     }
 
     public void updateQuantity(int newQuantity){
-            if (newQuantity < 1){
-                throw new InvalidQuantityException();
+            if (newQuantity < 0){
+                throw new NotEnoughQuantityException();
             }
             this.quantity = newQuantity;
+            calculatePrice();
     }
 }

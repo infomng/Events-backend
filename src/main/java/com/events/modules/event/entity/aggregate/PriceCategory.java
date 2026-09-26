@@ -11,7 +11,7 @@ import org.hibernate.annotations.SQLRestriction;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "price_category")
+@Table(name = "price_categories")
 @Getter
 @Setter
 @Builder
@@ -30,8 +30,9 @@ public class PriceCategory extends AuditableEntity {
     @Column(nullable = false)
     private Integer availableTickets;
 
-    @Column(nullable = false)
-    private Integer soldTickets;
+    @Column
+    @Builder.Default
+    private Integer soldTickets = 0;
 
     @Column(nullable = false)
     private Integer totalTickets;
@@ -48,6 +49,11 @@ public class PriceCategory extends AuditableEntity {
         if(DefaultPriceCategoryEnum.FREE.name().equals(name)) {
             price = BigDecimal.ZERO;
         }
+    }
+
+    @PreUpdate
+    private void updateAvailableTickets() {
+        availableTickets = totalTickets - soldTickets;
     }
 }
 

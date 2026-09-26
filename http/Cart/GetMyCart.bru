@@ -1,5 +1,5 @@
 meta {
-  name: Get My Cart
+  name: GetMyCart
   type: http
   seq: 2
 }
@@ -7,9 +7,5 @@ meta {
 get {
   url: {{host}}/cart
   body: none
-  auth: bearer
-}
-
-auth:bearer {
-  token: {{ACCESS_TOKEN}}
+  auth: inherit
 }

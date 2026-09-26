@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{host}}/events/b47fc6b9-60be-4efc-926c-e0c856dd0af9/images
+  url: {{host}}/events/d4e63d92-9865-4f35-a3a3-836b0867f60f/images
   body: multipartForm
   auth: inherit
 }
@@ -37,11 +37,9 @@ body:json {
 }
 
 body:multipart-form {
-  files: @file(/Users/gedeon_mac/Desktop/Capture d’écran 2025-12-20 à 08.17.22.png)
+  files: @file(/Users/gedeon_mac/Desktop/p/JAVA/SPRING/SPRING-BOOT/Events/Images/360_F_236643295_4s5nBTP2yGeYj0GkB6kZ9qFJaw7mrq8m.webp) @contentType(image/webp)
 }
 
-script:post-response {
-  if(res.body.value.access_token) {
-    bru.setVar('access_token_set_by_collection_script', res.body.value.access_token);
-     }
+body:file {
+  file: @file()
 }

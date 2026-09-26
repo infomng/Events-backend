@@ -1,8 +1,7 @@
 package com.events.modules.datageneration.service;
 
 import com.events.modules.event.dto.CreateEventCommandDto;
-import com.events.modules.event.dto.PriceCategoryDto;
-import com.events.modules.event.entity.Event;
+import com.events.modules.event.dto.CreatePriceCategoryDto;
 import com.events.modules.event.service.impl.EventService;
 import lombok.RequiredArgsConstructor;
 import net.datafaker.Faker;
@@ -44,11 +43,11 @@ public class FakeDataGenerationService implements IFakeDataGenerationService{
                     .ticketPrice(faker.number().randomDouble(2, 10, 100))
                     .hasSeats(faker.bool().bool())
                     .priceCategories(List.of(
-                            PriceCategoryDto.builder()
+                            CreatePriceCategoryDto.builder()
                                     .name("Standard")
                                     .price(BigDecimal.valueOf(faker.number().randomDouble(2, 10, 100)))
                                     .build(),
-                            PriceCategoryDto.builder()
+                            CreatePriceCategoryDto.builder()
                                     .name("VIP")
                                     .price(BigDecimal.valueOf(faker.number().randomDouble(2, 30, 100)))
                                     .build()

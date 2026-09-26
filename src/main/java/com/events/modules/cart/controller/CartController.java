@@ -22,20 +22,20 @@ public class CartController {
     private final ICartService cartService;
 
     @PostMapping("/items")
-    public ResponseEntity<Result<Void>> addToCart(@Valid @RequestBody AddItemToCartDto addItemToCartDto) {
+    public ResponseEntity<Result<Void>> addItemToCart(@Valid @RequestBody AddItemToCartDto addItemToCartDto) {
         cartService.addItemToCart(addItemToCartDto);
         return ResponseEntity.ok(Result.success());
     }
 
     @GetMapping
-    public ResponseEntity<Result<GetCartDto>> getMyCart() {
-        GetCartDto cart = cartService.getMyCart();
+    public ResponseEntity<Result<GetCartDto>> getCurrentUserCart() {
+        GetCartDto cart = cartService.getCurrentUserCart();
         return ResponseEntity.ok(Result.success(cart));
     }
 
     @DeleteMapping("/items/{cartItemId}")
     public ResponseEntity<Result<Void>> removeFromCart(@PathVariable UUID cartItemId) {
-        cartService.removeItemFromCart(cartItemId);
+        cartService.removeCartItem(cartItemId);
         return ResponseEntity.ok(Result.success());
     }
 
