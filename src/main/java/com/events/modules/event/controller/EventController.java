@@ -1,14 +1,12 @@
 package com.events.modules.event.controller;
 
 
-import com.events.common.dto.pagination.PageResponse;
+import com.events.common.dto.pagination.PageResponseDto;
 import com.events.common.result.Result;
 import com.events.modules.event.dto.*;
 import com.events.modules.event.service.IEventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -42,11 +40,11 @@ public class EventController {
     }
 
     @GetMapping
-    public ResponseEntity<Result<PageResponse<GetEventDto>>> getEvents(
+    public ResponseEntity<Result<PageResponseDto<GetEventDto>>> getEvents(
             @ModelAttribute EventSearchCriteriaDto criteria,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        PageResponse<GetEventDto> results = eventService.getEvents(criteria, pageable);
+        PageResponseDto<GetEventDto> results = eventService.getEvents(criteria, pageable);
         return ResponseEntity.ok(Result.success(results));
     }
 
@@ -63,7 +61,7 @@ public class EventController {
 
     @GetMapping("/all")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Result<PageResponse<GetEventDto>>> getAll(
+    public ResponseEntity<Result<PageResponseDto<GetEventDto>>> getAll(
                                  @RequestParam(defaultValue = "0") int page,
                                  @RequestParam(defaultValue = "10") int size,
                                  @RequestParam(defaultValue = "DESC", required = false) String sort,

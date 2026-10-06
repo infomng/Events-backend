@@ -7,6 +7,8 @@ import java.util.UUID;
 
 public interface ICartService {
 
+    void createCart();
+
     /**
      * Add an item to the current user's cart
      * @param addItemToCartDto the item to add

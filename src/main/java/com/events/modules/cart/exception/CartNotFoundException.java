@@ -8,6 +8,6 @@ public class CartNotFoundException extends RuntimeException {
     }
 
     public CartNotFoundException(UUID userId) {
-        super("Cart not found for user: " + userId);
+        super("Cart not found for user with id: " + userId);
     }
 }
