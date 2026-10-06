@@ -1,7 +1,6 @@
 package com.events.modules.cart.service.impl;
 
 import com.events.modules.auth.service.auth.IAuthService;
-import com.events.modules.cart.dto.UpdateCartItemDto;
 import com.events.modules.cart.dto.AddItemToCartDto;
 import com.events.modules.cart.dto.GetCartDto;
 import com.events.modules.cart.dto.mapper.ICartMapper;
@@ -24,6 +23,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.swing.text.html.Option;
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,12 +40,24 @@ public class CartService implements ICartService {
     private final ICartMapper cartMapper;
 
     @Override
+    public void createCart() {
+        User currentUser = getCurrentUser();
+        Optional<Cart> cart = cartRepository.findByUserId(currentUser.getId());
+        if(cart.isEmpty()) {
+            Cart newCart = createNewCart(currentUser.getId());
+            cartRepository.save(newCart);
+            log.info("Created new cart for user {}", currentUser.getId());
+        }
+    }
+
+    @Override
     public void addItemToCart(AddItemToCartDto addItemToCartDto) {
 
         User currentUser = getCurrentUser();
 
-        // Get or create active cart
-        Cart cart = getCartOrCreateCarByUserId(currentUser.getId());
+        // Get active cart
+        Cart cart = cartRepository.findByUserId(currentUser.getId())
+                .orElseThrow(() -> new CartNotFoundException(currentUser.getId()));
 
         // Validate event exists
         GetEventDto event = getEventById(addItemToCartDto.eventId());
@@ -135,11 +147,6 @@ public class CartService implements ICartService {
         return eventService.getEventById(eventId);
     }
 
-    private @NonNull Cart getCartOrCreateCarByUserId(UUID userId) {
-        return cartRepository.findByUserId(userId)
-                .orElseGet(() -> createNewCart(userId));
-    }
-
     private User getCurrentUser() {
         return authService.getCurrentUser();
     }
@@ -149,7 +156,8 @@ public class CartService implements ICartService {
     public GetCartDto getCurrentUserCart() {
         User currentUser = getCurrentUser();
 
-        Cart cart = getCartOrCreateCarByUserId(currentUser.getId());
+        Cart cart = cartRepository.findByUserId(currentUser.getId())
+                .orElseThrow(() -> new CartNotFoundException(currentUser.getId()));
 
         return cartMapper.toDto(cart);
     }
@@ -179,11 +187,9 @@ public class CartService implements ICartService {
     }
 
     private Cart createNewCart(UUID userId) {
-        Cart newCart = Cart.builder()
+        return Cart.builder()
                 .userId(userId)
                 .totalPrice(BigDecimal.ZERO)
                 .build();
-
-        return cartRepository.save(newCart);
     }
 }

@@ -1,6 +1,6 @@
 package com.events.modules.event.service.impl;
 
-import com.events.common.dto.pagination.PageResponse;
+import com.events.common.dto.pagination.PageResponseDto;
 import com.events.common.supabase.service.ISupabaseStorageService;
 import com.events.common.utils.contants.Constants;
 import com.events.modules.auth.service.auth.IAuthService;
@@ -23,7 +23,6 @@ import com.events.modules.event.enumeration.EventStatusEnum;
 import com.events.modules.event.exception.EventForbidenException;
 import com.events.modules.event.exception.EventNotFoundException;
 import com.events.modules.event.dto.mapper.IEventMapper;
-import com.events.modules.event.dto.mapper.IEventSearchMapper;
 import com.events.modules.event.exception.MaximumNumberOfImageException;
 import com.events.modules.event.repository.IEventRepository;
 import com.events.modules.event.service.IEventService;
@@ -36,7 +35,6 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -46,6 +44,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -101,6 +100,7 @@ public class EventService implements IEventService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public List<String> uploadEventImages(UUID eventId, MultipartFile[] files) throws IOException {
 
         User currentUser = authService.getCurrentUser();
@@ -125,13 +125,13 @@ public class EventService implements IEventService {
 
     @Override
     @Cacheable(value = "EVENTS", key = "#page + '-' + #size + '-' + #country")
-    public PageResponse<GetEventDto> getAllEvents(int page, int size, String country) {
+    public PageResponseDto<GetEventDto> getAllEvents(int page, int size, String country) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Event> eventsList = eventRepository.findAll(pageable);
 
         var eventsListDto = eventsList.map(eventMapper::toDto).toList();
 
-        return PageResponse.<GetEventDto>builder()
+        return PageResponseDto.<GetEventDto>builder()
                 .page(page)
                 .size(size)
                 .totalElements(eventsList.getTotalElements())
@@ -306,7 +306,7 @@ public class EventService implements IEventService {
             key = "#criteria.toString() + '_' + #pageable.pageNumber + '_' + #pageable.pageSize",
             condition = "#criteria.isPublic() == true && #pageable.pageNumber == 0"
     )
-    public PageResponse<GetEventDto> getEvents(EventSearchCriteriaDto criteria, Pageable pageable) {
+    public PageResponseDto<GetEventDto> getEvents(EventSearchCriteriaDto criteria, Pageable pageable) {
         log.debug("Searching events with criteria: {}", criteria);
 
         Specification<Event> spec = buildSpecification(criteria);
@@ -314,7 +314,7 @@ public class EventService implements IEventService {
 
         List<GetEventDto> eventDtoList = eventMapper.toDtoList(events.getContent());
 
-        return PageResponse.<GetEventDto>builder()
+        return PageResponseDto.<GetEventDto>builder()
                 .content(eventDtoList)
                 .totalElements(events.getTotalElements())
                 .totalPages(events.getTotalPages())
@@ -350,7 +350,7 @@ public class EventService implements IEventService {
 
         // Date filters
         if (Boolean.TRUE.equals(criteria.upcomingOnly())) {
-            addSpecIfNotNull(specs, EventSpecifications.startsAfter(LocalDateTime.now()));
+            addSpecIfNotNull(specs, EventSpecifications.startsAfter(LocalDateTime.now(ZoneId.systemDefault())));
         } else {
             addSpecIfNotNull(specs, EventSpecifications.startsAfter(criteria.startDateFrom()));
             addSpecIfNotNull(specs, EventSpecifications.startsBefore(criteria.startDateTo()));
