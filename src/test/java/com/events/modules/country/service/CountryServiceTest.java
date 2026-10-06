@@ -18,7 +18,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -139,19 +138,14 @@ class CountryServiceTest {
 
     @Test
     @DisplayName("Should throw exception when updating country with duplicate PaysEnum")
-    void updateCountry_ShouldThrowExceptionWhenPaysEnumConflicts() throws Exception {
+    void updateCountry_ShouldThrowExceptionWhenPaysEnumConflicts() {
         // Given
-        UUID otherCountryId = UUID.randomUUID();
         Country otherCountry = Country.builder()
+                .id(UUID.randomUUID())
                 .name("Germany")
                 .code("DE")
                 .paysEnum(PaysEnum.GERMANY)
                 .build();
-
-        // Use reflection to set the id field
-        var idField = Country.class.getSuperclass().getSuperclass().getDeclaredField("id");
-        idField.setAccessible(true);
-        idField.set(otherCountry, otherCountryId);
 
         when(countryRepository.findById(countryId)).thenReturn(Optional.of(country));
         when(countryRepository.findByPaysEnum(updateCommandDto.paysEnum()))
@@ -278,10 +272,9 @@ class CountryServiceTest {
         List<CountryDto> result = countryService.getAllCountries();
 
         // Then
-        assertThat(result).isNotNull();
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).name()).isEqualTo("France");
-        assertThat(result.get(0).code()).isEqualTo("FR");
+        assertThat(result).isNotNull().hasSize(1);
+        assertThat(result.getFirst().name()).isEqualTo("France");
+        assertThat(result.getFirst().code()).isEqualTo("FR");
         verify(countryRepository).findAll();
         verify(countryMapper).toDtoList(countries);
     }

@@ -1,8 +1,7 @@
 package com.events.modules.event.service;
 
-import com.events.common.dto.pagination.PageResponse;
+import com.events.common.dto.pagination.PageResponseDto;
 import com.events.modules.event.dto.*;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,7 +13,7 @@ public interface IEventService {
     UUID createEvent(CreateEventCommandDto command);
     List<String> uploadEventImages(UUID eventId, MultipartFile[] files) throws IOException;
 
-    PageResponse<GetEventDto> getAllEvents(int page, int size, String country);
+    PageResponseDto<GetEventDto> getAllEvents(int page, int size, String country);
     GetEventDto getEventById(UUID id);
     List<GetEventDto> getEventsNearby(Double lat, Double lon, Double radiusInMeters);
     List<GetEventDto> getAllIncomingEvents();
@@ -25,7 +24,7 @@ public interface IEventService {
      * @param pageable pagination and sorting parameters
      * @return paginated search results
      */
-    PageResponse<GetEventDto> getEvents(EventSearchCriteriaDto criteria, Pageable pageable);
+    PageResponseDto<GetEventDto> getEvents(EventSearchCriteriaDto criteria, Pageable pageable);
     Boolean existById(UUID id);
     List<GetEventDto> getAllByIds(List<UUID> ids);
 

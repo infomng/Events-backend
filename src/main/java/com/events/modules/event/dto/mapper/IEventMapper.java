@@ -1,7 +1,7 @@
 package com.events.modules.event.dto.mapper;
 
 
-import com.events.common.config.Mapper.CentralMapperConfig;
+import com.events.common.config.Mapper.ICentralMapperConfig;
 import com.events.modules.category.dto.mapper.ICategoryMapper;
 import com.events.modules.country.dto.mapper.ICountryMapper;
 import com.events.modules.event.dto.CreateEventCommandDto;
@@ -14,7 +14,7 @@ import org.mapstruct.*;
 import java.util.List;
 
 @Mapper(componentModel = "spring",
-        config = CentralMapperConfig.class,
+        config = ICentralMapperConfig.class,
         uses = {IPriceCategoryMapper.class, IImageMapper.class, ICountryMapper.class, ICategoryMapper.class})
 public interface IEventMapper {
 
