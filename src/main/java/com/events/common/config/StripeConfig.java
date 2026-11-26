@@ -14,6 +14,8 @@ public class StripeConfig {
     private String secretKey;
     private String publishableKey;
     private String webhookSecret;
+    /** Devise unique utilisée pour les paiements (code ISO 4217). */
+    private String currency = "usd";
 
     @PostConstruct
     public void init() {
