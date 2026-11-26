@@ -9,12 +9,14 @@ import com.events.modules.booking.service.IBookingService;
 import com.events.modules.event.enumeration.BookingStatusEnum;
 import com.events.modules.payment.dto.ConfirmPaymentDto;
 import com.events.modules.payment.dto.InitiatePaymentDto;
+import com.events.modules.payment.dto.PaymentResponseDto;
 import com.events.modules.payment.dto.RefundPaymentDto;
 import com.events.modules.payment.dto.mapper.IPaymentMapper;
 import com.events.modules.payment.entity.Payment;
 import com.events.modules.payment.enumeration.PaymentGatewayEnum;
 import com.events.modules.payment.enumeration.PaymentMethodEnum;
 import com.events.modules.payment.enumeration.PaymentStatusEnum;
+import com.events.modules.payment.exception.PaymentAlreadyProcessedException;
 import com.events.modules.payment.exception.PaymentFailedException;
 import com.events.modules.payment.exception.PaymentNotFoundException;
 import com.events.modules.payment.repository.IPaymentRepository;
@@ -113,6 +115,38 @@ class PaymentServiceTest {
                     bookingId, PaymentMethodEnum.values()[0], PaymentGatewayEnum.STRIPE, null));
 
             verify(stripeGatewayService).createPaymentIntent(eq(12050L), eq("usd"), anyString(), any());
+        }
+
+        @Test
+        void pendingPaymentIsResumedInsteadOfCreatingASecondOne() throws Exception {
+            given(bookingService.getPayableBooking(bookingId, currentUser.getId()))
+                    .willReturn(new BookingPaymentDto(bookingId, currentUser.getId(),
+                            new BigDecimal("50.00"), BookingStatusEnum.PENDING, "BK-1"));
+            Payment pending = stripePayment(currentUser.getId(), PaymentStatusEnum.PENDING);
+            pending.setStripeClientSecret("existing-secret");
+            given(paymentRepository.findAllByBookingIdAndStatusIn(eq(bookingId), any()))
+                    .willReturn(List.of(pending));
+
+            PaymentResponseDto response = paymentService.initiatePayment(new InitiatePaymentDto(
+                    bookingId, PaymentMethodEnum.values()[0], PaymentGatewayEnum.STRIPE, null));
+
+            assertThat(response.clientSecret()).isEqualTo("existing-secret");
+            assertThat(response.paymentReference()).isEqualTo("PAY-TEST");
+            verify(stripeGatewayService, never()).createPaymentIntent(anyLong(), anyString(), anyString(), any());
+            verify(paymentRepository, never()).save(any());
+        }
+
+        @Test
+        void paymentAlreadyCompletedCannotBeInitiatedAgain() {
+            given(bookingService.getPayableBooking(bookingId, currentUser.getId()))
+                    .willReturn(new BookingPaymentDto(bookingId, currentUser.getId(),
+                            new BigDecimal("50.00"), BookingStatusEnum.PENDING, "BK-1"));
+            given(paymentRepository.findAllByBookingIdAndStatusIn(eq(bookingId), any()))
+                    .willReturn(List.of(stripePayment(currentUser.getId(), PaymentStatusEnum.PROCESSING)));
+
+            assertThatThrownBy(() -> paymentService.initiatePayment(new InitiatePaymentDto(
+                    bookingId, PaymentMethodEnum.values()[0], PaymentGatewayEnum.STRIPE, null)))
+                    .isInstanceOf(PaymentAlreadyProcessedException.class);
         }
 
         @Test
