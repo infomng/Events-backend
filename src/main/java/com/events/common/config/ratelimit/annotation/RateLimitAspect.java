@@ -8,6 +8,8 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.time.Duration;
 import java.util.Map;
@@ -17,12 +19,22 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class RateLimitAspect {
 
+    /** Adresse du client ; en dehors d'une requête HTTP (tâche planifiée, test), un quota commun. */
+    static String clientKey() {
+        if (RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes attributes) {
+            return attributes.getRequest().getRemoteAddr();
+        }
+        return "no-request";
+    }
+
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
 
     @Around("@annotation(rateLimit)")
     public Object limit(ProceedingJoinPoint pjp, RateLimit rateLimit) throws Throwable {
 
-        String key = pjp.getSignature().toShortString();
+        // Un quota par client et par endpoint : un quota global serait partagé par tous les utilisateurs,
+        // et quelques appels suffiraient à bloquer tout le monde.
+        String key = pjp.getSignature().toShortString() + "|" + clientKey();
 
         int capacity = rateLimit.capacity();
 
