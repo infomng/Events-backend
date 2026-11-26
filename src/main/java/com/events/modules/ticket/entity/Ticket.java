@@ -12,6 +12,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -50,4 +51,10 @@ public class Ticket extends AuditableEntity {
 
     @Lob
     private byte[] qrCode;
+
+    /** Date du passage à l'entrée. */
+    private LocalDateTime checkedInAt;
+
+    /** Contrôleur qui a scanné le billet. */
+    private UUID checkedInBy;
 }

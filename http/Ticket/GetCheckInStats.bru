@@ -1,0 +1,15 @@
+meta {
+  name: GetCheckInStats
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{host}}/tickets/check-in/stats/{{eventId}}
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  eventId:
+}

@@ -1,0 +1,22 @@
+meta {
+  name: AddStaff
+  type: http
+  seq: 18
+}
+
+post {
+  url: {{host}}/events/{{eventId}}/staff
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "email": "{{staffEmail}}"
+  }
+}
+
+vars:pre-request {
+  eventId:
+  staffEmail:
+}

@@ -5,6 +5,7 @@ import com.events.common.dto.pagination.PageResponseDto;
 import com.events.common.result.Result;
 import com.events.modules.event.dto.*;
 import com.events.modules.event.service.IEventService;
+import com.events.modules.user.dto.GetUserDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -110,6 +111,23 @@ public class EventController {
     public ResponseEntity<Result<Void>> generateSeats(@PathVariable UUID id, @RequestParam List<GenerateSeatDto> generateSeatDto) {
         eventService.generateSeatsForEvent(id, generateSeatDto);
         return ResponseEntity.ok(Result.success());
+    }
+
+    @PostMapping("/{id}/staff")
+    public ResponseEntity<Result<Void>> addStaff(@PathVariable UUID id, @Valid @RequestBody AddEventStaffDto dto) {
+        eventService.addStaff(id, dto);
+        return ResponseEntity.ok(Result.success());
+    }
+
+    @DeleteMapping("/{id}/staff/{userId}")
+    public ResponseEntity<Result<Void>> removeStaff(@PathVariable UUID id, @PathVariable UUID userId) {
+        eventService.removeStaff(id, userId);
+        return ResponseEntity.ok(Result.success());
+    }
+
+    @GetMapping("/{id}/staff")
+    public ResponseEntity<Result<List<GetUserDto>>> getStaff(@PathVariable UUID id) {
+        return ResponseEntity.ok(Result.success(eventService.getStaff(id)));
     }
 
 }
