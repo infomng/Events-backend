@@ -1,0 +1,72 @@
+# Modèle de configuration de production : copier en application-prod.properties (non versionné)
+# ou fournir chaque valeur en variable d'environnement (ex. JWT_ACCESSTOKEN_SECRET pour jwt.access-token.secret).
+# Toutes les valeurs ci-dessous sont des exemples : NE JAMAIS committer de vraies valeurs.
+# Lancer avec : SPRING_PROFILES_ACTIVE=prod
+
+server.port=8080
+
+# --- Base de données (schéma géré par Flyway, voir src/main/resources/db/migration)
+spring.datasource.url=jdbc:postgresql://db-host:5432/events
+spring.datasource.username=events
+spring.datasource.password=${DB_PASSWORD}
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.properties.hibernate.format_sql=false
+
+# --- Application
+app.base-url=https://api.example.com
+app.api-version=/api/v1
+app.frontend-url=https://www.example.com
+# Origines autorisées (CORS), séparées par des virgules. Par défaut : app.frontend-url
+app.cors.allowed-origins=https://www.example.com
+
+# --- JWT (secrets longs et aléatoires : openssl rand -base64 64)
+jwt.access-token.secret=${JWT_ACCESS_SECRET}
+jwt.access-token.duration=900000
+jwt.refresh-token.secret=${JWT_REFRESH_SECRET}
+jwt.refresh-token.duration=604800000
+
+# --- Billets : clé de signature des QR codes (32 caractères minimum, ne jamais la changer après mise en vente :
+#     les QR codes déjà émis deviendraient invalides)
+ticket.signing-secret=${TICKET_SIGNING_SECRET}
+
+# --- Stripe (clés live) et webhook : https://dashboard.stripe.com/webhooks
+#     URL du webhook : https://api.example.com/api/v1/payments/webhook/stripe
+stripe.public-key=${STRIPE_PUBLIC_KEY}
+stripe.secret-key=${STRIPE_SECRET_KEY}
+stripe.webhook-secret=${STRIPE_WEBHOOK_SECRET}
+stripe.currency=eur
+
+# --- Google OAuth2
+spring.security.oauth2.client.registration.google.client-id=${GOOGLE_CLIENT_ID}
+spring.security.oauth2.client.registration.google.client-secret=${GOOGLE_CLIENT_SECRET}
+spring.security.oauth2.client.registration.google.scope=openid,profile,email
+spring.security.oauth2.client.provider.google.authorization-uri=https://accounts.google.com/o/oauth2/v2/auth
+spring.security.oauth2.client.provider.google.token-uri=https://oauth2.googleapis.com/token
+spring.security.oauth2.client.provider.google.user-info-uri=https://openidconnect.googleapis.com/v1/userinfo
+
+# --- Email (SMTP)
+spring.mail.host=smtp.example.com
+spring.mail.port=587
+spring.mail.username=${MAIL_USERNAME}
+spring.mail.password=${MAIL_PASSWORD}
+spring.mail.protocol=smtp
+spring.mail.properties.mail.smtp.auth=true
+spring.mail.properties.mail.smtp.starttls.enable=true
+
+# --- Supabase Storage (images des événements)
+supabase.project-url=https://your-project.supabase.co
+supabase.api-key=${SUPABASE_API_KEY}
+supabase.service-role-key=${SUPABASE_SERVICE_ROLE_KEY}
+supabase.bucket-name=eventsimagebucket
+supabase.storage-object=/storage/v1/object/
+supabase.storage-object-public=/storage/v1/object/public/
+
+# --- Redis (cache)
+spring.data.redis.host=redis
+spring.data.redis.port=6379
+spring.cache.type=redis
+
+# --- Réservations
+booking.hold-minutes=15

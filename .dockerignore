@@ -1,0 +1,23 @@
+# Ne jamais envoyer de secrets dans le contexte de build Docker
+src/main/resources/application.properties
+src/main/resources/application-*.properties
+!src/main/resources/application-*.properties.example
+src/test/resources/application*.properties
+**/.env
+**/*.env
+!**/*.env.example
+**/*.pem
+
+# Inutile pour construire l'image
+target/
+.git/
+.idea/
+.vscode/
+.claude/
+.gemini/
+http/
+docs/
+scripts/
+*.iml
+*.md
+img.png

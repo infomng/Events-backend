@@ -21,7 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Vérifie sur une vraie base (H2) les requêtes atomiques de réservation de places.
  */
-@DataJpaTest
+// Schéma créé par Hibernate sur H2 : les migrations Flyway (SQL PostgreSQL) sont testées à part
+@DataJpaTest(properties = {"spring.flyway.enabled=false", "spring.jpa.hibernate.ddl-auto=create-drop"})
 @Import({JpaConfig.class, SpringSecurityAuditorAware.class})
 class StockReservationEventTest {
 
