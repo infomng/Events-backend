@@ -1,0 +1,40 @@
+# Configuration commune à tous les profils, SANS AUCUN SECRET (ce fichier est versionné).
+# Les secrets et valeurs propres à un environnement vont dans application-<profil>.properties
+# (non versionnés) ou dans des variables d'environnement. Modèle : application-prod.properties.example
+
+spring:
+  jpa:
+    hibernate:
+      # Le schéma est géré par Flyway : Hibernate vérifie seulement qu'il correspond aux entités.
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    # Base existante créée par ddl-auto=update : on la considère au niveau V1, puis V2+ s'appliquent.
+    baseline-on-migrate: true
+    baseline-version: 1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      # Statut seulement (UP/DOWN) : aucun détail d'infrastructure exposé publiquement
+      show-details: never
+      probes:
+        enabled: true
+  health:
+    # Un serveur SMTP indisponible ne doit pas faire considérer l'API comme hors service
+    mail:
+      enabled: false
+
+booking:
+  # Durée de blocage des places en attendant le paiement
+  hold-minutes: 15
+  # Fréquence de la tâche d'expiration des réservations (ms)
+  expiration-check-ms: 60000
+
+stripe:
+  currency: usd
