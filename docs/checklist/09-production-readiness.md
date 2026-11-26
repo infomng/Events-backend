@@ -42,11 +42,13 @@ Le panier et le paiement existent, mais rien ne les relie.
 ## P0 : sécurité et exploitation
 
 - [ ] Changer les secrets exposés et nettoyer l'historique git
-- [ ] Protéger `POST /data-generation` (ADMIN uniquement, ou désactivé en prod)
-- [ ] CORS configurable (aujourd'hui codée en dur sur `localhost:3000`)
-- [ ] Migrations de base de données (Flyway ou Liquibase) au lieu de `ddl-auto=update`
-- [ ] Dockerfile de l'API et pipeline de déploiement
-- [ ] Supervision : Actuator, health checks, logs centralisés, alertes d'erreurs
+- [x] Protéger `POST /data-generation` (ADMIN uniquement, ou désactivé en prod)
+- [x] CORS configurable (`app.cors.allowed-origins`, par défaut `app.frontend-url`)
+- [x] Migrations de base de données (Flyway, testées sur PostgreSQL) au lieu de `ddl-auto=update`
+- [x] Dockerfile de l'API
+- [ ] Pipeline de déploiement (dépend de l'hébergement cible)
+- [x] Supervision : Actuator et health checks (`/actuator/health`, liveness, readiness)
+- [ ] Supervision : logs centralisés et alertes d'erreurs
 - [ ] Sauvegardes automatiques de la base
 
 ## P0 : frontend

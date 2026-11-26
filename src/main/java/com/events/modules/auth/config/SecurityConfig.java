@@ -72,11 +72,17 @@ public class SecurityConfig {
             "/oauth2/**", "/login/oauth2/**",
             // Webhook Stripe : public, mais chaque requête est authentifiée par sa signature
             "/api/v1/payments/webhook/stripe",
+            // Sondes de santé (load balancer, Docker, Kubernetes) : statut uniquement, sans détails
+            "/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness",
             "/error"
     };
 
     @Value("${app.api-version}")
     private String apiVersion;
+
+    /** Origines autorisées (CORS), séparées par des virgules. Par défaut : l'URL du frontend. */
+    @Value("${app.cors.allowed-origins:${app.frontend-url}}")
+    private List<String> allowedOrigins;
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
@@ -95,7 +101,6 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(WHITE_LIST_URL).permitAll()
-                        .requestMatchers(apiVersion + "/products/**").hasAnyRole(RoleEnum.ADMIN.name(), RoleEnum.USER.name())
                         .requestMatchers(apiVersion + "/auth/profile").authenticated()
                         .anyRequest()
                         .authenticated()
@@ -183,7 +188,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
