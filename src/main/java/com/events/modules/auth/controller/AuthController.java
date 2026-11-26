@@ -32,10 +32,14 @@ public class AuthController {
     private final JwtProperties jwtProperties;
     private final AuthenticationConverter authenticationConverter;
 
+    // Anti force brute et abus d'envoi d'emails : quota par adresse IP
+    @RateLimit(capacity = 5)
     @PostMapping("/register")
     public ResponseEntity<Result<String>> register(@RequestBody @Valid RegisterCommandDto command) {
         return ResponseEntity.ok(Result.success(authService.register(command)));}
 
+    // Anti force brute et abus d'envoi d'emails : quota par adresse IP
+    @RateLimit(capacity = 10)
     @PostMapping("/login")
     public ResponseEntity<Result<Void>> login(HttpServletRequest request) {
 
@@ -90,22 +94,27 @@ public class AuthController {
         return ResponseEntity.ok(Result.success(authService.verifyEmail(token)));
     }
 
+    // Anti force brute et abus d'envoi d'emails : quota par adresse IP
+    @RateLimit(capacity = 5)
     @GetMapping("/resend-verification-email")
     public ResponseEntity<Result<String>> resendVerificationEmail(@RequestParam String email) {
         return ResponseEntity.ok(Result.success(authService.resendVerificationEmail(email)));
     }
 
+    // Anti force brute et abus d'envoi d'emails : quota par adresse IP
+    @RateLimit(capacity = 5)
     @PostMapping("/forgot-password")
     public ResponseEntity<Result<String>> forgotPassword(@RequestBody ForgotPasswordRequestDto request) {
         return ResponseEntity.ok(Result.success(authService.forgotPassword(request)));
     }
 
+    // Anti force brute et abus d'envoi d'emails : quota par adresse IP
+    @RateLimit(capacity = 5)
     @PostMapping("/reset-password")
     public ResponseEntity<Result<String>> resetPassword(@RequestBody ResetPasswordRequestDto request) {
         return ResponseEntity.ok(Result.success(authService.resetPassword(request)));
     }
 
-    @RateLimit(capacity = 3)
     @GetMapping("/profile")
     public ResponseEntity<Result<GetUserDto>> profile() {
         return ResponseEntity.ok(Result.success(authService.getCurrentUserDto()));

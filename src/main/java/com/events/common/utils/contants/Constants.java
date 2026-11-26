@@ -25,8 +25,6 @@ package com.events.common.utils.contants;
 
         // Rate limiting
         public static final String TOO_MANY_REQUESTS = "Too Many Requests";
-        public static final int RATE_LIMIT_REQUESTS = 10;
-        public static final int RATE_LIMIT_RESET_TIME = 1;
 
         // Authentication / Authorization
         public static final String TOKEN = "token";
