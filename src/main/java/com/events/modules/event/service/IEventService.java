@@ -63,6 +63,15 @@ public interface IEventService {
     void removeStaff(UUID eventId, UUID userId);
 
     List<GetUserDto> getStaff(UUID eventId);
+
+    /**
+     * Vérifie que l'utilisateur courant est l'organisateur de l'événement (ou un admin).
+     * @throws com.events.modules.event.exception.EventForbidenException sinon
+     */
+    void assertCurrentUserManagesEvent(UUID eventId);
+
+    /** Événements de l'organisateur courant, brouillons compris. */
+    PageResponseDto<GetEventDto> getMyEvents(int page, int size);
 }
 
 //TODO:void deleteEvent(Long id);

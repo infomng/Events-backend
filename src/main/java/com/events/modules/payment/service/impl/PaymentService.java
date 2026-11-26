@@ -308,6 +308,29 @@ public class PaymentService implements IPaymentService {
         return getOwnedPaymentByReference(paymentReference).getStatus();
     }
 
+    @Override
+    public boolean refundBookingForCancelledEvent(UUID bookingId) {
+        boolean refunded = true;
+        for (Payment payment : paymentRepository.findAllByBookingId(bookingId)) {
+            if (payment.getStatus() != PaymentStatusEnum.COMPLETED || payment.getStripePaymentIntentId() == null) {
+                continue;
+            }
+            try {
+                stripeGatewayService.refundPaymentIntent(payment.getStripePaymentIntentId(), "refund-" + payment.getId());
+                payment.markAsRefunded("Event cancelled by the organizer");
+                log.info("Payment {} refunded: event cancelled", payment.getPaymentReference());
+            } catch (StripeException e) {
+                refunded = false;
+                payment.setFailureReason("REFUND_REQUIRED: event cancelled (" + e.getMessage() + ")");
+                log.error("Refund failed for payment {} of cancelled event: {}", payment.getPaymentReference(), e.getMessage());
+            }
+            paymentRepository.save(payment);
+        }
+        // L'événement n'aura pas lieu : billets annulés et réservation close, même si le remboursement a échoué
+        bookingService.cancelBookingAfterRefund(bookingId);
+        return refunded;
+    }
+
     /**
      * Applique l'état d'un PaymentIntent Stripe au paiement local.
      * Vérifie que l'intention correspond bien au paiement (identifiant, montant, devise).

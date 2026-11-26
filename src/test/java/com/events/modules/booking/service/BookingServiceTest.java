@@ -3,6 +3,8 @@ package com.events.modules.booking.service;
 import com.events.common.exception.BadRequestException;
 import com.events.modules.auth.service.auth.IAuthService;
 import com.events.modules.booking.dto.CheckoutRequestDto;
+import com.events.modules.booking.dto.SalesReportDto;
+import com.events.modules.booking.dto.SalesRowDto;
 import com.events.modules.booking.dto.mapper.IBookingMapper;
 import com.events.modules.booking.entity.Booking;
 import com.events.modules.booking.entity.BookingItem;
@@ -18,6 +20,7 @@ import com.events.modules.event.enumeration.BookingStatusEnum;
 import com.events.modules.event.enumeration.EventStatusEnum;
 import com.events.modules.event.exception.TicketsSoldOutException;
 import com.events.modules.event.service.IEventService;
+import com.events.modules.ticket.dto.CheckInStatsDto;
 import com.events.modules.ticket.service.ITicketService;
 import com.events.modules.user.entity.User;
 import com.events.modules.user.service.IUserService;
@@ -288,6 +291,33 @@ class BookingServiceTest {
             verify(ticketService).cancelTicketsForBooking(booking.getId());
             verify(eventService).releaseTickets(eventId, regularId, 2);
             assertThat(booking.getStatus()).isEqualTo(BookingStatusEnum.CANCELLED);
+        }
+    }
+
+    @Nested
+    class SalesBookingTest {
+
+        @Test
+        void reportAggregatesConfirmedSalesAndHolds() {
+            given(eventService.getEventById(eventId)).willReturn(event(EventStatusEnum.PUBLISHED, new BigDecimal("20.00")));
+            given(bookingRepository.aggregateSalesByEvent(eventId)).willReturn(List.of(
+                    new SalesRowDto(regularId, BookingStatusEnum.CONFIRMED, 30L, new BigDecimal("600.00")),
+                    new SalesRowDto(regularId, BookingStatusEnum.PENDING, 5L, new BigDecimal("100.00")),
+                    new SalesRowDto(regularId, BookingStatusEnum.CANCELLED, 2L, new BigDecimal("40.00"))
+            ));
+            given(bookingRepository.countByEventIdAndStatus(eventId, BookingStatusEnum.CONFIRMED)).willReturn(12L);
+            given(ticketService.getCheckInStats(eventId)).willReturn(new CheckInStatsDto(eventId, 30, 7, 23, 2));
+
+            SalesReportDto report = bookingService.getSalesReport(eventId);
+
+            verify(eventService).assertCurrentUserManagesEvent(eventId);
+            assertThat(report.capacity()).isEqualTo(100);
+            assertThat(report.soldTickets()).isEqualTo(30);
+            assertThat(report.heldTickets()).isEqualTo(5);
+            assertThat(report.revenue()).isEqualByComparingTo("600.00");
+            assertThat(report.fillRatePercent()).isEqualTo(30.0);
+            assertThat(report.confirmedBookings()).isEqualTo(12);
+            assertThat(report.checkedIn()).isEqualTo(7);
         }
     }
 }

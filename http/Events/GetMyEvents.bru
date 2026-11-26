@@ -1,0 +1,12 @@
+meta {
+  name: GetMyEvents
+  type: http
+  seq: 21
+}
+
+get {
+  url: {{host}}/events/mine?page=0&size=10
+  body: none
+  auth: inherit
+}
+

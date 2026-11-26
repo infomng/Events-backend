@@ -27,6 +27,7 @@ import org.mockito.quality.Strictness;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -156,6 +157,25 @@ class TicketServiceTest {
 
             assertThatThrownBy(() -> ticketService.checkIn(new CheckInRequestDto(eventId, signer.sign("code-1"))))
                     .isInstanceOf(EventForbidenException.class);
+        }
+    }
+
+    @Nested
+    class ExportTicketTest {
+
+        @Test
+        void csvEscapesQuotesAndNeutralisesFormulas() {
+            User attacker = User.builder().id(UUID.randomUUID())
+                    .fullName("=HYPERLINK(\"http://evil\")").email("a@example.com").build();
+            Ticket t = Ticket.builder().id(UUID.randomUUID()).eventId(eventId).user(attacker)
+                    .ticketCode("code-9").category("VIP").price(10.0).status(TicketStatusEnum.VALID).build();
+            given(ticketRepository.findByEventIdWithHolder(eventId)).willReturn(List.of(t));
+
+            String csv = ticketService.exportParticipantsCsv(eventId);
+
+            verify(eventService).assertCurrentUserManagesEvent(eventId);
+            assertThat(csv).contains("\"'=HYPERLINK(\"\"http://evil\"\")\"");
+            assertThat(csv).contains("\"code-9\";\"VIP\"");
         }
     }
 

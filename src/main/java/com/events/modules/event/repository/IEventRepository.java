@@ -1,6 +1,8 @@
 package com.events.modules.event.repository;
 
 import com.events.modules.event.entity.Event;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -23,6 +25,8 @@ public interface IEventRepository extends JpaRepository<Event, UUID>, JpaSpecifi
             "AND e.status = com.events.modules.event.enumeration.EventStatusEnum.PUBLISHED")
     List<Event> getAllIncomingEvents();
 
+
+    Page<Event> findByOrganizerId(UUID organizerId, Pageable pageable);
 
     @Query("SELECT e FROM Event e WHERE e.id = ?1 AND e.organizer.id = ?2")
     Optional<Event> findByIdAndOrganizerId(UUID eventId, UUID organizerId);

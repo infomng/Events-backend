@@ -2,9 +2,13 @@ package com.events.modules.booking.service;
 
 import com.events.common.exception.BadRequestException;
 import com.events.modules.auth.service.auth.IAuthService;
+import com.events.modules.booking.dto.BookingNoticeDto;
+import com.events.modules.booking.dto.CategorySalesDto;
 import com.events.modules.booking.dto.BookingPaymentDto;
 import com.events.modules.booking.dto.CheckoutRequestDto;
 import com.events.modules.booking.dto.GetBookingDto;
+import com.events.modules.booking.dto.SalesReportDto;
+import com.events.modules.booking.dto.SalesRowDto;
 import com.events.modules.booking.dto.mapper.IBookingMapper;
 import com.events.modules.booking.entity.Booking;
 import com.events.modules.booking.entity.BookingItem;
@@ -224,6 +228,80 @@ public class BookingService implements IBookingService {
                     release(booking, BookingStatusEnum.EXPIRED);
                     log.info("Booking {} expired, tickets released", booking.getBookingReference());
                 });
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UUID> findBookingIdsForEvent(UUID eventId, List<BookingStatusEnum> statuses) {
+        return bookingRepository.findIdsByEventIdAndStatusIn(eventId, statuses);
+    }
+
+    @Override
+    public void cancelPendingBookingForCancelledEvent(UUID bookingId) {
+        bookingRepository.findForUpdateById(bookingId)
+                .filter(b -> b.getStatus() == BookingStatusEnum.PENDING)
+                .ifPresent(booking -> release(booking, BookingStatusEnum.CANCELLED));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BookingNoticeDto getBookingNotice(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new BookingNotFoundException(bookingId));
+        User user = userService.findById(booking.getUserId());
+        return new BookingNoticeDto(booking.getId(), booking.getBookingReference(), booking.getEventName(),
+                user.getEmail(), user.getFullName());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SalesReportDto getSalesReport(UUID eventId) {
+        eventService.assertCurrentUserManagesEvent(eventId);
+        GetEventDto event = eventService.getEventById(eventId);
+        List<SalesRowDto> rows = bookingRepository.aggregateSalesByEvent(eventId);
+
+        List<CategorySalesDto> categories = event.priceCategories().stream().map(pc -> {
+            long sold = sum(rows, pc.id(), BookingStatusEnum.CONFIRMED);
+            long held = sum(rows, pc.id(), BookingStatusEnum.PENDING);
+            BigDecimal revenue = rows.stream()
+                    .filter(r -> r.priceCategoryId().equals(pc.id()) && r.status() == BookingStatusEnum.CONFIRMED)
+                    .map(SalesRowDto::amount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            return new CategorySalesDto(pc.id(), pc.name(), pc.price(), nullToZero(pc.totalTickets()),
+                    sold, held, nullToZero(pc.availableTickets()), revenue);
+        }).toList();
+
+        int capacity = categories.stream().mapToInt(CategorySalesDto::capacity).sum();
+        long sold = categories.stream().mapToLong(CategorySalesDto::soldTickets).sum();
+        long held = categories.stream().mapToLong(CategorySalesDto::heldTickets).sum();
+        int available = categories.stream().mapToInt(CategorySalesDto::availableTickets).sum();
+        BigDecimal revenue = categories.stream().map(CategorySalesDto::revenue).reduce(BigDecimal.ZERO, BigDecimal::add);
+        double fillRate = capacity == 0 ? 0 : Math.round(sold * 1000.0 / capacity) / 10.0;
+
+        return new SalesReportDto(
+                event.id(),
+                event.name(),
+                capacity,
+                sold,
+                held,
+                available,
+                fillRate,
+                revenue,
+                bookingRepository.countByEventIdAndStatus(eventId, BookingStatusEnum.CONFIRMED),
+                ticketService.getCheckInStats(eventId).checkedIn(),
+                categories
+        );
+    }
+
+    private static long sum(List<SalesRowDto> rows, UUID priceCategoryId, BookingStatusEnum status) {
+        return rows.stream()
+                .filter(r -> r.priceCategoryId().equals(priceCategoryId) && r.status() == status)
+                .mapToLong(r -> r.quantity() == null ? 0 : r.quantity())
+                .sum();
+    }
+
+    private static int nullToZero(Integer value) {
+        return value == null ? 0 : value;
     }
 
     private void confirm(Booking booking, String paymentId) {

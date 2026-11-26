@@ -20,6 +20,7 @@ import com.events.modules.event.entity.aggregate.Image;
 import com.events.modules.event.entity.aggregate.Seat;
 import com.events.modules.event.enumeration.DefaultPriceCategoryEnum;
 import com.events.modules.event.enumeration.EventStatusEnum;
+import com.events.modules.event.events.EventCancelledEvent;
 import com.events.modules.event.exception.EventForbidenException;
 import com.events.modules.event.exception.TicketsSoldOutException;
 import com.events.modules.event.exception.EventNotFoundException;
@@ -42,8 +43,10 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -72,6 +75,7 @@ public class EventService implements IEventService {
     private final ICountryMapper countryMapper;
     private final IUserService userService;
     private final IUserMapper userMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public UUID createEvent(CreateEventCommandDto command) {
@@ -247,23 +251,29 @@ public class EventService implements IEventService {
     }
 
     @Override
-    @CacheEvict(value = "EVENT", key = "#id")
+    @Caching(evict = {
+            @CacheEvict(value = "EVENT", key = "#eventId"),
+            @CacheEvict(value = {"EVENTS", "eventSearch"}, allEntries = true)
+    })
     public void softDeleteEvent(UUID eventId) {
-        User currentUser = authService.getCurrentUser();
+        Event event = getEventManagedByCurrentUser(eventId);
 
-        Event event = eventRepository.findByIdAndOrganizerId(eventId, currentUser.getId())
-                .orElseThrow(() -> new EventForbidenException(eventId));
+        // Des billets ont été vendus ou sont bloqués : il faut annuler (et rembourser), pas supprimer
+        if (hasTicketsSoldOrHeld(event)) {
+            throw new BadRequestException("Event has sold tickets: cancel it instead of deleting it.");
+        }
 
         event.setIsActive(false);
         eventRepository.save(event);
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "EVENT", key = "#eventId"),
+            @CacheEvict(value = {"EVENTS", "eventSearch"}, allEntries = true)
+    })
     public void cancelEvent(UUID eventId) {
-        User currentUser = authService.getCurrentUser();
-
-        Event event = eventRepository.findByIdAndOrganizerId(eventId, currentUser.getId())
-                .orElseThrow(() -> new BadRequestException(Constants.EVENTS_NOT_FOUND));
+        Event event = getEventManagedByCurrentUser(eventId);
 
         if (event.getStatus() != EventStatusEnum.PUBLISHED) {
             throw new BadRequestException("Event cannot be cancelled as it is not in PUBLISHED state.");
@@ -272,17 +282,18 @@ public class EventService implements IEventService {
         event.setStatus(EventStatusEnum.CANCELLED);
         eventRepository.save(event);
 
-        // TODO: Notify all participants about the event cancellation
-
-        // TODO: Trigger refunds for all sold tickets
+        // Remboursements et notifications des participants, après validation de l'annulation
+        eventPublisher.publishEvent(new EventCancelledEvent(event.getId(), event.getName()));
+        log.info("Event {} cancelled by {}", eventId, authService.getCurrentUser().getId());
     }
 
     @Override
+    @Caching(evict = {
+            @CacheEvict(value = "EVENT", key = "#eventId"),
+            @CacheEvict(value = {"EVENTS", "eventSearch"}, allEntries = true)
+    })
     public void publishEvent(UUID eventId) {
-        User currentUser = authService.getCurrentUser();
-
-        Event event = eventRepository.findByIdAndOrganizerId(eventId, currentUser.getId())
-                .orElseThrow(() -> new BadRequestException(Constants.EVENTS_NOT_FOUND));
+        Event event = getEventManagedByCurrentUser(eventId);
 
         if (event.getStatus() != EventStatusEnum.DRAFT) {
             throw new BadRequestException(Constants.ONLY_EVENTS_WITH_DRAFT_STATUS_CAN_BE_PUBLISHED);
@@ -387,6 +398,33 @@ public class EventService implements IEventService {
             throw new EventForbidenException(eventId);
         }
         return event;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public void assertCurrentUserManagesEvent(UUID eventId) {
+        getEventManagedByCurrentUser(eventId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponseDto<GetEventDto> getMyEvents(int page, int size) {
+        User currentUser = authService.getCurrentUser();
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "startDate"));
+        Page<Event> events = eventRepository.findByOrganizerId(currentUser.getId(), pageable);
+        return PageResponseDto.<GetEventDto>builder()
+                .page(page)
+                .size(size)
+                .totalElements(events.getTotalElements())
+                .totalPages(events.getTotalPages())
+                .last(events.isLast())
+                .content(events.map(eventMapper::toDto).toList())
+                .build();
+    }
+
+    private static boolean hasTicketsSoldOrHeld(Event event) {
+        return event.getPriceCategories().stream()
+                .anyMatch(pc -> pc.getSoldTickets() != null && pc.getSoldTickets() > 0);
     }
 
     private static boolean isOrganizer(Event event, User user) {

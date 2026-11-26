@@ -13,4 +13,11 @@ public interface IMailService {
      */
     void sendBookingConfirmationEmail(String email, String fullName, String eventName,
                                       String bookingReference, Map<String, byte[]> ticketQrCodes);
+
+    /**
+     * Prévient un acheteur que l'événement est annulé.
+     * @param refunded true si le remboursement a été déclenché (ou si rien n'avait été payé)
+     */
+    void sendEventCancellationEmail(String email, String fullName, String eventName,
+                                    String bookingReference, boolean refunded);
 }

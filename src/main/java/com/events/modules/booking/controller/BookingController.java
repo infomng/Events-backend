@@ -3,6 +3,7 @@ package com.events.modules.booking.controller;
 import com.events.common.result.Result;
 import com.events.modules.booking.dto.CheckoutRequestDto;
 import com.events.modules.booking.dto.GetBookingDto;
+import com.events.modules.booking.dto.SalesReportDto;
 import com.events.modules.booking.service.IBookingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -41,6 +43,13 @@ public class BookingController {
     @Operation(summary = "Get one of my bookings")
     public ResponseEntity<Result<GetBookingDto>> getMyBooking(@PathVariable UUID bookingId) {
         return ResponseEntity.ok(Result.success(bookingService.getMyBooking(bookingId)));
+    }
+
+    @GetMapping("/sales/{eventId}")
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
+    @Operation(summary = "Sales dashboard of an event (organizer or admin)")
+    public ResponseEntity<Result<SalesReportDto>> getSalesReport(@PathVariable UUID eventId) {
+        return ResponseEntity.ok(Result.success(bookingService.getSalesReport(eventId)));
     }
 
     @PatchMapping("/{bookingId}/cancel")

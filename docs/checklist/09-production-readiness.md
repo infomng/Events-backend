@@ -33,10 +33,10 @@ Le panier et le paiement existent, mais rien ne les relie.
 
 ## P0 : espace organisateur
 
-- [ ] Rôle ORGANIZER réellement appliqué (qui peut créer, publier, annuler)
-- [ ] Annulation d'un événement en cascade : remboursements et notification des participants
-- [ ] Liste des participants et export CSV
-- [ ] Tableau de bord des ventes : billets vendus, chiffre d'affaires, taux de remplissage
+- [x] Rôle ORGANIZER réellement appliqué (qui peut créer, publier, annuler)
+- [x] Annulation d'un événement en cascade : remboursements et notification des participants
+- [x] Liste des participants et export CSV
+- [x] Tableau de bord des ventes : billets vendus, chiffre d'affaires, taux de remplissage
 - [ ] Versement des recettes aux organisateurs (Stripe Connect) et commission de la plateforme
 
 ## P0 : sécurité et exploitation
