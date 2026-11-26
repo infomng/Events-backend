@@ -30,6 +30,9 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -100,12 +103,25 @@ public class SecurityConfig {
         http
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(WHITE_LIST_URL).permitAll()
+                        // Avant la liste blanche (qui ouvre /auth/**), sinon cette règle ne s'applique jamais
                         .requestMatchers(apiVersion + "/auth/profile").authenticated()
+                        .requestMatchers(WHITE_LIST_URL).permitAll()
+                        // Catalogue public : un visiteur parcourt les événements sans compte.
+                        // Les vues organisateur restent protégées (déclarées avant la règle générale).
+                        .requestMatchers(HttpMethod.GET, apiVersion + "/events/mine", apiVersion + "/events/*/staff").authenticated()
+                        .requestMatchers(HttpMethod.GET,
+                                apiVersion + "/events", apiVersion + "/events/*",
+                                apiVersion + "/events/nearby", apiVersion + "/events/incoming",
+                                apiVersion + "/categories", apiVersion + "/categories/*").permitAll()
                         .anyRequest()
                         .authenticated()
                 )
                 .csrf(AbstractHttpConfigurer::disable)
+                // API : sans session valide, répondre 401 (le front rafraîchit la session) plutôt que
+                // rediriger vers la connexion Google, redirection qu'un appel XHR ne peut pas suivre.
+                .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                        request -> request.getRequestURI().startsWith(apiVersion + "/")))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

@@ -32,6 +32,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -153,14 +155,24 @@ public class AuthService implements IAuthService {
 
     @Override
     public User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal().equals(Constants.ANONYMOUS_USER)) {
+        if (!isAuthenticated()) {
             throw new UserNotFoundException(Constants.USER_NOT_AUTHENTICATED);
         }
+        return userService.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName());
+    }
 
-        String email = authentication.getName();
+    @Override
+    public Optional<User> findCurrentUser() {
+        if (!isAuthenticated()) {
+            return Optional.empty();
+        }
+        return Optional.of(userService.findByEmail(SecurityContextHolder.getContext().getAuthentication().getName()));
+    }
 
-        return userService.findByEmail(email);
+    private static boolean isAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.isAuthenticated()
+                && !authentication.getPrincipal().equals(Constants.ANONYMOUS_USER);
     }
 
     @Override
