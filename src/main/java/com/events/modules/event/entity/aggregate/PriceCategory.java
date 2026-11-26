@@ -11,17 +11,19 @@ import org.hibernate.annotations.SQLRestriction;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "price_categories")
+@Table(name = "price_categories",
+        // Un nom de catégorie est unique par événement, pas dans toute la base
+        uniqueConstraints = @UniqueConstraint(name = "uk_price_category_event_name", columnNames = {"event_id", "name"}))
 @Getter
 @Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@SQLDelete(sql = "UPDATE price_category SET deleted = true WHERE id=?")
+@SQLDelete(sql = "UPDATE price_categories SET deleted = true WHERE id=?")
 @SQLRestriction("deleted = false")
 public class PriceCategory extends AuditableEntity {
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
