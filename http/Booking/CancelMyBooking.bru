@@ -1,0 +1,15 @@
+meta {
+  name: CancelMyBooking
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{host}}/bookings/{{bookingId}}/cancel
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  bookingId:
+}

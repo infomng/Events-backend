@@ -24,7 +24,8 @@ public interface IPaymentRepository extends JpaRepository<Payment, UUID> {
 
     Optional<Payment> findByTransactionId(String transactionId);
 
-    Optional<Payment> findByBookingId(UUID bookingId);
+    /** Une réservation peut avoir plusieurs paiements (tentatives échouées puis nouvelle tentative). */
+    List<Payment> findAllByBookingId(UUID bookingId);
 
     List<Payment> findByUserId(UUID userId);
 

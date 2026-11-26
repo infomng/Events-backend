@@ -26,6 +26,12 @@ public class Ticket extends AuditableEntity {
     @Column(name = "event_id", nullable = false)
     private UUID eventId;
 
+    @Column(name = "booking_id")
+    private UUID bookingId;
+
+    /** Nom de la catégorie de prix au moment de l'achat (snapshot). */
+    private String category;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

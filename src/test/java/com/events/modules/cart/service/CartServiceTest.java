@@ -6,6 +6,7 @@ import com.events.modules.cart.dto.GetCartDto;
 import com.events.modules.cart.dto.mapper.ICartMapper;
 import com.events.modules.cart.entity.Cart;
 import com.events.modules.cart.exception.CartNotFoundException;
+import com.events.modules.cart.exception.TooMuchQuantityException;
 import com.events.modules.cart.repository.ICartRepository;
 import com.events.modules.cart.service.impl.CartService;
 import com.events.modules.cart.testdatabuilder.CartTestDataBuilder;
@@ -90,6 +91,20 @@ class CartServiceTest {
             then(eventService).should().getEventById(addItemToCartDto.eventId());
             then(cartRepository).should().save(any(Cart.class));
             then(authService).should().getCurrentUser();
+        }
+
+        @Test
+        void addNewItemShouldBeRejectedWhenQuantityExceedsAvailableTickets() {
+            // Given : 10 places disponibles, 11 demandées
+            AddItemToCartDto tooMany = new AddItemToCartDto(addItemToCartDto.eventId(), addItemToCartDto.priceCategoryId(), 11, null);
+            given(authService.getCurrentUser()).willReturn(user);
+            given(eventService.getEventById(tooMany.eventId())).willReturn(getEventDto);
+            given(cartRepository.findByUserId(any(UUID.class))).willReturn(Optional.of(cart));
+
+            // When & Then
+            assertThatThrownBy(() -> cartService.addItemToCart(tooMany))
+                    .isInstanceOf(TooMuchQuantityException.class);
+            then(cartRepository).should(never()).save(any(Cart.class));
         }
 
         @Test

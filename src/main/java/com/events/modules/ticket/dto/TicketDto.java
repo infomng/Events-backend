@@ -10,6 +10,8 @@ public record TicketDto(
         UUID id,
         UUID eventId,
         String eventName,
+        UUID bookingId,
+        String category,
         UUID userId,
         String userName,
         String ticketCode,

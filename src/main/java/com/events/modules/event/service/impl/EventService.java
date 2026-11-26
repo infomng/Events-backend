@@ -21,6 +21,7 @@ import com.events.modules.event.entity.aggregate.Seat;
 import com.events.modules.event.enumeration.DefaultPriceCategoryEnum;
 import com.events.modules.event.enumeration.EventStatusEnum;
 import com.events.modules.event.exception.EventForbidenException;
+import com.events.modules.event.exception.TicketsSoldOutException;
 import com.events.modules.event.exception.EventNotFoundException;
 import com.events.modules.event.dto.mapper.IEventMapper;
 import com.events.modules.event.exception.MaximumNumberOfImageException;
@@ -38,6 +39,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -288,6 +290,39 @@ public class EventService implements IEventService {
     public List<String> getDefaultPriceCategories() {
         return List.of(DefaultPriceCategoryEnum.FREE.name(), DefaultPriceCategoryEnum.REGULAR.name(),
                 DefaultPriceCategoryEnum.VIP.name(), DefaultPriceCategoryEnum.PREMIUM.name());
+    }
+
+    @Override
+    @Caching(evict = {
+            @CacheEvict(value = "EVENT", key = "#eventId"),
+            @CacheEvict(value = {"EVENTS", "eventSearch"}, allEntries = true)
+    })
+    public void reserveTickets(UUID eventId, UUID priceCategoryId, int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+        int updated = eventRepository.reservePriceCategoryTickets(eventId, priceCategoryId, quantity);
+        if (updated == 0) {
+            throw new TicketsSoldOutException(priceCategoryId, quantity);
+        }
+        eventRepository.adjustEventAvailableTickets(eventId, -quantity);
+    }
+
+    @Override
+    @Caching(evict = {
+            @CacheEvict(value = "EVENT", key = "#eventId"),
+            @CacheEvict(value = {"EVENTS", "eventSearch"}, allEntries = true)
+    })
+    public void releaseTickets(UUID eventId, UUID priceCategoryId, int quantity) {
+        if (quantity <= 0) {
+            return;
+        }
+        int updated = eventRepository.releasePriceCategoryTickets(eventId, priceCategoryId, quantity);
+        if (updated == 0) {
+            log.error("Could not release {} tickets for price category {} of event {}", quantity, priceCategoryId, eventId);
+            return;
+        }
+        eventRepository.adjustEventAvailableTickets(eventId, quantity);
     }
 
     @Override

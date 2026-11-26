@@ -14,14 +14,14 @@ Priorités :
 
 Le panier et le paiement existent, mais rien ne les relie.
 
-- [ ] Passer commande depuis le panier (`POST /checkout`) : création de la `Booking` à partir du panier
-- [ ] Bloquer les places pendant le paiement, avec une durée limite
-- [ ] Job d'expiration des réservations non payées, qui libère les places
-- [ ] Anti-survente : verrou ou version sur le stock, contrôle du stock aussi pour un nouvel article du panier
-- [ ] Génération des tickets après paiement (`TicketService.generateTicketsForBooking` n'est appelé nulle part)
-- [ ] Vider le panier après une commande payée
-- [ ] Email de confirmation avec les billets (QR code ou PDF)
-- [ ] Annulation des tickets quand une commande est remboursée
+- [x] Passer commande depuis le panier (`POST /checkout`) : création de la `Booking` à partir du panier
+- [x] Bloquer les places pendant le paiement, avec une durée limite
+- [x] Job d'expiration des réservations non payées, qui libère les places
+- [x] Anti-survente : verrou ou version sur le stock, contrôle du stock aussi pour un nouvel article du panier
+- [x] Génération des tickets après paiement (`TicketService.generateTicketsForBooking` n'est appelé nulle part)
+- [x] Vider le panier après une commande payée
+- [x] Email de confirmation avec les billets (QR code ou PDF)
+- [x] Annulation des tickets quand une commande est remboursée
 
 ## P0 : contrôle d'accès le jour J
 
@@ -63,7 +63,7 @@ Le panier et le paiement existent, mais rien ne les relie.
 
 - [ ] Profil modifiable, changement de mot de passe, suppression de compte (RGPD)
 - [ ] Historique des commandes, factures et reçus
-- [ ] Billets gratuits et limite de billets par personne
+- [ ] Billets gratuits (confirmés sans paiement : fait) et limite de billets par personne
 - [ ] Codes promo et tarifs early bird
 - [ ] Billets nominatifs et transfert d'un billet
 - [ ] Rappels par email (J-1) et notification en cas de modification d'un événement

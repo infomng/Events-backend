@@ -1,8 +1,11 @@
 package com.events.modules.cart.service.impl;
 
+import com.events.common.exception.BadRequestException;
+
 import com.events.modules.auth.service.auth.IAuthService;
 import com.events.modules.cart.dto.AddItemToCartDto;
 import com.events.modules.cart.dto.GetCartDto;
+import com.events.modules.cart.dto.GetCartItemDto;
 import com.events.modules.cart.dto.mapper.ICartMapper;
 import com.events.modules.cart.entity.Cart;
 import com.events.modules.cart.entity.CartItem;
@@ -26,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.swing.text.html.Option;
 import java.math.BigDecimal;
 import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -83,6 +87,8 @@ public class CartService implements ICartService {
             log.info("Updated cart item newQuantity for event: {}", event.name());
 
         } else {
+            validateNewQuantity(addItemToCartDto.quantity(), priceCategory.availableTickets());
+
             // Create new cart item with snapshot data
             CartItem newItem = CartItem.builder()
                     .eventId(event.id())
@@ -184,6 +190,27 @@ public class CartService implements ICartService {
         return cartRepository.findByUserId(currentUser.getId())
                 .map(cart -> cart.getItems().size())
                 .orElse(0);
+    }
+
+    @Override
+    public List<GetCartItemDto> takeItemsForEvent(UUID userId, UUID eventId) {
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new CartNotFoundException(userId));
+
+        List<CartItem> eventItems = cart.getItems().stream()
+                .filter(item -> item.getEventId().equals(eventId) && item.getQuantity() > 0)
+                .toList();
+
+        if (eventItems.isEmpty()) {
+            throw new BadRequestException("No item in cart for event " + eventId);
+        }
+
+        List<GetCartItemDto> taken = cartMapper.toCartItemDtoList(eventItems);
+        eventItems.forEach(cart::removeItem);
+        cartRepository.save(cart);
+
+        log.info("Moved {} cart item(s) of event {} to checkout for user {}", taken.size(), eventId, userId);
+        return taken;
     }
 
     private Cart createNewCart(UUID userId) {

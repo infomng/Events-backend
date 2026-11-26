@@ -4,6 +4,7 @@ import com.events.common.exception.BadRequestException;
 import com.events.common.i18n.LocalizationService;
 import com.events.modules.auth.service.auth.IAuthService;
 import com.events.modules.booking.dto.BookingPaymentDto;
+import com.events.modules.booking.events.BookingReleasedEvent;
 import com.events.modules.booking.service.IBookingService;
 import com.events.modules.payment.dto.*;
 import com.events.modules.payment.dto.mapper.IPaymentMapper;
@@ -30,6 +31,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -333,10 +335,13 @@ public class PaymentService implements IPaymentService {
             case "succeeded" -> {
                 payment.markAsPaid(paymentIntent.getId());
                 payment.setFailureReason(null);
-                bookingService.confirmBookingPayment(payment.getBookingId(), payment.getId().toString());
-                log.info("Payment completed: {}", payment.getPaymentReference());
-                // TODO: Trigger ticket generation
-                // TODO: Send confirmation email
+                // Confirme la réservation, émet les billets et déclenche l'email de confirmation
+                boolean honoured = bookingService.confirmBookingPayment(payment.getBookingId(), payment.getId().toString());
+                if (honoured) {
+                    log.info("Payment completed: {}", payment.getPaymentReference());
+                } else {
+                    refundUnhonouredPayment(payment);
+                }
             }
             case "processing" -> payment.markAsProcessing();
             case "canceled" -> payment.markAsCancelled(
@@ -352,6 +357,46 @@ public class PaymentService implements IPaymentService {
 
         payment.setGatewayResponse("stripe_status=" + stripeStatus);
         paymentRepository.save(payment);
+    }
+
+    /**
+     * Le client a payé après l'expiration de sa réservation et les places ne sont plus disponibles :
+     * remboursement automatique.
+     */
+    private void refundUnhonouredPayment(Payment payment) {
+        try {
+            stripeGatewayService.refundPaymentIntent(payment.getStripePaymentIntentId(), "refund-" + payment.getId());
+            payment.markAsRefunded("Booking expired and tickets were no longer available");
+            log.warn("Payment {} automatically refunded: booking could not be honoured", payment.getPaymentReference());
+        } catch (StripeException e) {
+            // Paiement encaissé sans billets : à traiter manuellement par un administrateur
+            payment.setFailureReason("REFUND_REQUIRED: booking could not be honoured (" + e.getMessage() + ")");
+            log.error("Automatic refund failed for payment {}: {}", payment.getPaymentReference(), e.getMessage());
+        }
+    }
+
+    /**
+     * Une réservation non payée a expiré ou été annulée : annule le paiement en cours.
+     * Ne lève jamais d'exception pour ne pas faire échouer l'expiration.
+     */
+    @EventListener
+    public void onBookingReleased(BookingReleasedEvent event) {
+        paymentRepository.findAllByBookingId(event.bookingId()).stream()
+                .filter(payment -> !payment.isFinal())
+                .forEach(payment -> {
+                    if (payment.getStripePaymentIntentId() != null) {
+                        try {
+                            stripeGatewayService.cancelPaymentIntent(payment.getStripePaymentIntentId());
+                        } catch (StripeException e) {
+                            // Si le paiement a abouti entre-temps, le webhook le traitera (remboursement si besoin)
+                            log.warn("Could not cancel PaymentIntent {} of released booking {}: {}",
+                                    payment.getStripePaymentIntentId(), event.bookingId(), e.getMessage());
+                            return;
+                        }
+                    }
+                    payment.markAsCancelled("Booking released before payment");
+                    paymentRepository.save(payment);
+                });
     }
 
     private PaymentIntent extractPaymentIntent(Event event) {

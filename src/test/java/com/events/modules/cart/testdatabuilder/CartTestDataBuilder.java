@@ -43,6 +43,7 @@ public class CartTestDataBuilder {
                 .name("VIP")
                 .price(BigDecimal.valueOf(100.0))
                 .totalTickets(10)
+                .availableTickets(10)
                 .build();
     }
 

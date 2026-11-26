@@ -4,6 +4,7 @@ import com.events.common.exception.BadRequestException;
 import com.events.common.i18n.LocalizationService;
 import com.events.modules.auth.service.auth.IAuthService;
 import com.events.modules.booking.dto.BookingPaymentDto;
+import com.events.modules.booking.events.BookingReleasedEvent;
 import com.events.modules.booking.service.IBookingService;
 import com.events.modules.event.enumeration.BookingStatusEnum;
 import com.events.modules.payment.dto.ConfirmPaymentDto;
@@ -33,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -68,6 +70,7 @@ class PaymentServiceTest {
         given(localizationService.getMessage(anyString())).willReturn("message");
         given(stripeGatewayService.getCurrency()).willReturn("usd");
         given(paymentRepository.save(any(Payment.class))).willAnswer(inv -> inv.getArgument(0));
+        given(bookingService.confirmBookingPayment(any(), any())).willReturn(true);
     }
 
     private Payment stripePayment(UUID ownerId, PaymentStatusEnum status) {
@@ -147,6 +150,19 @@ class PaymentServiceTest {
         }
 
         @Test
+        void paymentForBookingThatCannotBeHonouredIsRefunded() throws Exception {
+            Payment payment = stripePayment(currentUser.getId(), PaymentStatusEnum.PENDING);
+            given(paymentRepository.findForUpdateByPaymentReference("PAY-TEST")).willReturn(Optional.of(payment));
+            given(stripeGatewayService.retrievePaymentIntent("pi_123")).willReturn(intent("succeeded", 5000, "usd"));
+            given(bookingService.confirmBookingPayment(any(), any())).willReturn(false);
+
+            PaymentStatusEnum status = paymentService.confirmPayment(new ConfirmPaymentDto("PAY-TEST"));
+
+            assertThat(status).isEqualTo(PaymentStatusEnum.REFUNDED);
+            verify(stripeGatewayService).refundPaymentIntent("pi_123", "refund-" + payment.getId());
+        }
+
+        @Test
         void processingIntentIsNotTreatedAsPaid() throws Exception {
             Payment payment = stripePayment(currentUser.getId(), PaymentStatusEnum.PENDING);
             given(paymentRepository.findForUpdateByPaymentReference("PAY-TEST")).willReturn(Optional.of(payment));
@@ -220,6 +236,17 @@ class PaymentServiceTest {
                     .isInstanceOf(PaymentFailedException.class);
 
             assertThat(payment.getStatus()).isEqualTo(PaymentStatusEnum.PENDING);
+        }
+
+        @Test
+        void releasedBookingCancelsPendingPayment() throws Exception {
+            Payment payment = stripePayment(currentUser.getId(), PaymentStatusEnum.PENDING);
+            given(paymentRepository.findAllByBookingId(bookingId)).willReturn(List.of(payment));
+
+            paymentService.onBookingReleased(new BookingReleasedEvent(bookingId));
+
+            verify(stripeGatewayService).cancelPaymentIntent("pi_123");
+            assertThat(payment.getStatus()).isEqualTo(PaymentStatusEnum.CANCELLED);
         }
 
         @Test
