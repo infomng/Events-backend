@@ -42,7 +42,7 @@ public class UserService implements IUserService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "user" , key = "'existsByEmail:' + #email")
+    @Cacheable(value = "user" , key = "'findByEmail:' + #email")
     public User findByEmail(String email) {
         return userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
     }
