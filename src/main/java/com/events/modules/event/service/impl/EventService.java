@@ -29,7 +29,11 @@ import com.events.modules.event.repository.IEventRepository;
 import com.events.modules.event.service.IEventService;
 import com.events.modules.event.dto.mapper.IPriceCategoryMapper;
 import com.events.modules.event.specification.EventSpecifications;
+import com.events.modules.user.dto.GetUserDto;
+import com.events.modules.user.dto.mapper.IUserMapper;
 import com.events.modules.user.entity.User;
+import com.events.modules.user.enumeration.RoleEnum;
+import com.events.modules.user.service.IUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CachePut;
@@ -66,6 +70,8 @@ public class EventService implements IEventService {
     private final IPriceCategoryMapper priceCategoryMapper;
     private final ICountryService countryService;
     private final ICountryMapper countryMapper;
+    private final IUserService userService;
+    private final IUserMapper userMapper;
 
     @Override
     public UUID createEvent(CreateEventCommandDto command) {
@@ -323,6 +329,68 @@ public class EventService implements IEventService {
             return;
         }
         eventRepository.adjustEventAvailableTickets(eventId, quantity);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isCurrentUserEntryManager(UUID eventId) {
+        User currentUser = authService.getCurrentUser();
+        if (currentUser.getRole() == RoleEnum.ADMIN) {
+            return true;
+        }
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+        return isOrganizer(event, currentUser)
+                || event.getStaff() != null && event.getStaff().stream().anyMatch(u -> u.getId().equals(currentUser.getId()));
+    }
+
+    @Override
+    public void addStaff(UUID eventId, AddEventStaffDto dto) {
+        Event event = getEventManagedByCurrentUser(eventId);
+        User staffMember = userService.findByEmail(dto.email());
+        if (event.getStaff() == null) {
+            event.setStaff(new HashSet<>());
+        }
+        boolean alreadyStaff = event.getStaff().stream().anyMatch(u -> u.getId().equals(staffMember.getId()));
+        if (!alreadyStaff) {
+            event.getStaff().add(staffMember);
+            eventRepository.save(event);
+            log.info("User {} added to the staff of event {}", staffMember.getId(), eventId);
+        }
+    }
+
+    @Override
+    public void removeStaff(UUID eventId, UUID userId) {
+        Event event = getEventManagedByCurrentUser(eventId);
+        if (event.getStaff() != null && event.getStaff().removeIf(u -> u.getId().equals(userId))) {
+            eventRepository.save(event);
+            log.info("User {} removed from the staff of event {}", userId, eventId);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<GetUserDto> getStaff(UUID eventId) {
+        Event event = getEventManagedByCurrentUser(eventId);
+        if (event.getStaff() == null) {
+            return List.of();
+        }
+        return event.getStaff().stream().map(userMapper::toGetUserDto).toList();
+    }
+
+    /** Charge l'événement si l'utilisateur courant en est l'organisateur ou un administrateur. */
+    private Event getEventManagedByCurrentUser(UUID eventId) {
+        User currentUser = authService.getCurrentUser();
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EventNotFoundException(eventId));
+        if (currentUser.getRole() != RoleEnum.ADMIN && !isOrganizer(event, currentUser)) {
+            throw new EventForbidenException(eventId);
+        }
+        return event;
+    }
+
+    private static boolean isOrganizer(Event event, User user) {
+        return event.getOrganizer() != null && event.getOrganizer().getId().equals(user.getId());
     }
 
     @Override

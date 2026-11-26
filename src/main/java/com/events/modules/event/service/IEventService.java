@@ -2,6 +2,7 @@ package com.events.modules.event.service;
 
 import com.events.common.dto.pagination.PageResponseDto;
 import com.events.modules.event.dto.*;
+import com.events.modules.user.dto.GetUserDto;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -48,6 +49,20 @@ public interface IEventService {
      * Libère des billets précédemment bloqués (réservation expirée, annulée ou remboursée).
      */
     void releaseTickets(UUID eventId, UUID priceCategoryId, int quantity);
+
+    /**
+     * L'utilisateur courant peut-il contrôler les entrées de l'événement ?
+     * (organisateur, membre du staff de l'événement ou administrateur)
+     */
+    boolean isCurrentUserEntryManager(UUID eventId);
+
+    /** Ajoute un membre du staff (réservé à l'organisateur ou à un administrateur). */
+    void addStaff(UUID eventId, AddEventStaffDto dto);
+
+    /** Retire un membre du staff (réservé à l'organisateur ou à un administrateur). */
+    void removeStaff(UUID eventId, UUID userId);
+
+    List<GetUserDto> getStaff(UUID eventId);
 }
 
 //TODO:void deleteEvent(Long id);

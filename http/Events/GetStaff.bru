@@ -1,0 +1,15 @@
+meta {
+  name: GetStaff
+  type: http
+  seq: 19
+}
+
+get {
+  url: {{host}}/events/{{eventId}}/staff
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  eventId:
+}

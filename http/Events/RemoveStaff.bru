@@ -1,0 +1,16 @@
+meta {
+  name: RemoveStaff
+  type: http
+  seq: 20
+}
+
+delete {
+  url: {{host}}/events/{{eventId}}/staff/{{staffUserId}}
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  eventId:
+  staffUserId:
+}

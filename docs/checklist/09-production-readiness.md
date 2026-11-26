@@ -25,11 +25,11 @@ Le panier et le paiement existent, mais rien ne les relie.
 
 ## P0 : contrôle d'accès le jour J
 
-- [ ] Endpoint de scan : validation du billet, passage en `USED`, refus d'un second passage
-- [ ] QR code signé (HMAC ou JWT), infalsifiable
-- [ ] Rôle STAFF sur un événement, autorisé à scanner
-- [ ] Interface de scan mobile (PWA avec caméra, mode hors ligne si possible)
-- [ ] `getTicketById` : vérifier le propriétaire du billet
+- [x] Endpoint de scan : validation du billet, passage en `USED`, refus d'un second passage
+- [x] QR code signé (HMAC ou JWT), infalsifiable
+- [x] Rôle STAFF sur un événement, autorisé à scanner
+- [ ] Interface de scan mobile (PWA avec caméra, mode hors ligne si possible) : l'API est prête, reste le front
+- [x] `getTicketById` : vérifier le propriétaire du billet
 
 ## P0 : espace organisateur
 
