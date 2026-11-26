@@ -93,6 +93,30 @@ public class MailService implements IMailService {
         }
     }
 
+    @Async
+    @Override
+    public void sendEventCancellationEmail(String email, String fullName, String eventName,
+                                           String bookingReference, boolean refunded) {
+        try {
+            String content = Constants.EVENT_CANCELLATION_EMAIL_CONTENT.formatted(
+                    HtmlUtils.htmlEscape(fullName == null ? "" : fullName),
+                    HtmlUtils.htmlEscape(eventName == null ? "" : eventName),
+                    HtmlUtils.htmlEscape(bookingReference),
+                    refunded ? Constants.EVENT_CANCELLATION_REFUNDED : Constants.EVENT_CANCELLATION_REFUND_PENDING
+            );
+
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+            helper.setTo(email);
+            helper.setSubject(Constants.EVENT_CANCELLATION_SUBJECT.formatted(eventName));
+            helper.setFrom(mailProperties.username());
+            helper.setText(content, true);
+            mailSender.send(mimeMessage);
+        } catch (Exception e) {
+            LOGGER.error(Constants.FAILED_TO_SEND_EMAIL, e.getMessage(), e);
+        }
+    }
+
     private void sendEmail(String email, String token, String subject, String path, String message) {
         try {
             String actionUrl = appProperties.frontendUrl() + path + "?token=" + token;

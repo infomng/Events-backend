@@ -250,6 +250,33 @@ class PaymentServiceTest {
         }
 
         @Test
+        void cancelledEventRefundsPaidBookingAndCancelsIt() throws Exception {
+            Payment payment = stripePayment(currentUser.getId(), PaymentStatusEnum.COMPLETED);
+            given(paymentRepository.findAllByBookingId(bookingId)).willReturn(List.of(payment));
+
+            boolean refunded = paymentService.refundBookingForCancelledEvent(bookingId);
+
+            assertThat(refunded).isTrue();
+            assertThat(payment.getStatus()).isEqualTo(PaymentStatusEnum.REFUNDED);
+            verify(bookingService).cancelBookingAfterRefund(bookingId);
+        }
+
+        @Test
+        void failedRefundIsFlaggedButBookingStillCancelled() throws Exception {
+            Payment payment = stripePayment(currentUser.getId(), PaymentStatusEnum.COMPLETED);
+            given(paymentRepository.findAllByBookingId(bookingId)).willReturn(List.of(payment));
+            given(stripeGatewayService.refundPaymentIntent(anyString(), anyString()))
+                    .willThrow(new ApiException("stripe down", null, null, 503, null));
+
+            boolean refunded = paymentService.refundBookingForCancelledEvent(bookingId);
+
+            assertThat(refunded).isFalse();
+            assertThat(payment.getStatus()).isEqualTo(PaymentStatusEnum.COMPLETED);
+            assertThat(payment.getFailureReason()).startsWith("REFUND_REQUIRED");
+            verify(bookingService).cancelBookingAfterRefund(bookingId);
+        }
+
+        @Test
         void webhookWithInvalidSignatureIsRejected() throws Exception {
             given(stripeGatewayService.constructWebhookEvent(anyString(), anyString()))
                     .willThrow(new SignatureVerificationException("bad", "sig"));

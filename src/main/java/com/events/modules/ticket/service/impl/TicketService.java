@@ -9,6 +9,7 @@ import com.events.modules.qrcode.service.IQrCodeService;
 import com.events.modules.ticket.dto.CheckInRequestDto;
 import com.events.modules.ticket.dto.CheckInResultDto;
 import com.events.modules.ticket.dto.CheckInStatsDto;
+import com.events.modules.ticket.dto.ParticipantDto;
 import com.events.modules.ticket.dto.TicketDto;
 import com.events.modules.ticket.dto.TicketLineDto;
 import com.events.modules.ticket.entity.Ticket;
@@ -135,6 +136,56 @@ public class TicketService implements ITicketService {
         long used = ticketRepository.countByEventIdAndStatus(eventId, TicketStatusEnum.USED);
         long cancelled = ticketRepository.countByEventIdAndStatus(eventId, TicketStatusEnum.CANCELLED);
         return new CheckInStatsDto(eventId, valid + used, used, valid, cancelled);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ParticipantDto> getParticipants(UUID eventId) {
+        eventService.assertCurrentUserManagesEvent(eventId);
+        return ticketRepository.findByEventIdWithHolder(eventId).stream()
+                .map(ticket -> new ParticipantDto(
+                        ticket.getId(),
+                        ticket.getTicketCode(),
+                        ticket.getCategory(),
+                        ticket.getUser().getFullName(),
+                        ticket.getUser().getEmail(),
+                        ticket.getStatus(),
+                        ticket.getCheckedInAt(),
+                        ticket.getBookingId()))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String exportParticipantsCsv(UUID eventId) {
+        StringBuilder csv = new StringBuilder("\uFEFF"); // BOM : Excel lit correctement les accents
+        csv.append("ticket_code;category;holder_name;holder_email;status;checked_in_at;booking_id\r\n");
+        for (ParticipantDto p : getParticipants(eventId)) {
+            csv.append(String.join(";",
+                    csvCell(p.ticketCode()),
+                    csvCell(p.category()),
+                    csvCell(p.holderName()),
+                    csvCell(p.holderEmail()),
+                    csvCell(p.status() == null ? null : p.status().name()),
+                    csvCell(p.checkedInAt() == null ? null : p.checkedInAt().toString()),
+                    csvCell(p.bookingId() == null ? null : p.bookingId().toString())
+            )).append("\r\n");
+        }
+        return csv.toString();
+    }
+
+    /**
+     * Échappe une cellule CSV et neutralise l'injection de formules (=, +, -, @) dans les tableurs.
+     */
+    static String csvCell(String value) {
+        if (value == null) {
+            return "";
+        }
+        String safe = value;
+        if (!safe.isEmpty() && "=+-@\t\r".indexOf(safe.charAt(0)) >= 0) {
+            safe = "'" + safe;
+        }
+        return "\"" + safe.replace("\"", "\"\"") + "\"";
     }
 
     private void assertEntryManager(UUID eventId) {

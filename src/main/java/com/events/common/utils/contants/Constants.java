@@ -92,6 +92,21 @@ package com.events.common.utils.contants;
                     </div>
                 """;
 
+        public static final String EVENT_CANCELLATION_SUBJECT = "Event cancelled: %s";
+        public static final String EVENT_CANCELLATION_REFUNDED =
+                "Your booking has been cancelled and any amount paid is being refunded to your original payment method.";
+        public static final String EVENT_CANCELLATION_REFUND_PENDING =
+                "Your booking has been cancelled. Your refund could not be processed automatically: our team will handle it shortly.";
+        public static final String EVENT_CANCELLATION_EMAIL_CONTENT = """
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border-radius: 8px; background-color: #f9f9f9;">
+                        <h2 style="color: #333;">Hello %s,</h2>
+                        <p style="font-size: 16px; color: #555;">We are sorry to inform you that <strong>%s</strong> has been cancelled by the organizer.</p>
+                        <p style="font-size: 16px; color: #555;">Booking reference: <strong>%s</strong></p>
+                        <p style="font-size: 16px; color: #555;">%s</p>
+                        <p style="font-size: 12px; color: #aaa;">This is an automated message. Please do not reply.</p>
+                    </div>
+                """;
+
         // Misc / Tests
         public static final String EMPTY_STRING = " ";
         public static final String JOHN_DOE = "John Doe";

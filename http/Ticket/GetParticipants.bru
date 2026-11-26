@@ -1,0 +1,15 @@
+meta {
+  name: GetParticipants
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{host}}/tickets/participants/{{eventId}}
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  eventId:
+}

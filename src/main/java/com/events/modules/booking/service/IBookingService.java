@@ -1,8 +1,11 @@
 package com.events.modules.booking.service;
 
+import com.events.modules.booking.dto.BookingNoticeDto;
 import com.events.modules.booking.dto.BookingPaymentDto;
 import com.events.modules.booking.dto.CheckoutRequestDto;
 import com.events.modules.booking.dto.GetBookingDto;
+import com.events.modules.booking.dto.SalesReportDto;
+import com.events.modules.event.enumeration.BookingStatusEnum;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -49,4 +52,15 @@ public interface IBookingService {
 
     /** Expire une réservation non payée et libère ses places (sans effet si elle n'est plus en attente). */
     void expireBooking(UUID bookingId);
+
+    /** Réservations d'un événement ayant l'un des statuts donnés. */
+    List<UUID> findBookingIdsForEvent(UUID eventId, List<BookingStatusEnum> statuses);
+
+    /** Annule une réservation non payée parce que l'événement a été annulé (places libérées, paiement en cours annulé). */
+    void cancelPendingBookingForCancelledEvent(UUID bookingId);
+
+    BookingNoticeDto getBookingNotice(UUID bookingId);
+
+    /** Tableau de bord des ventes d'un événement. Réservé à l'organisateur et aux admins. */
+    SalesReportDto getSalesReport(UUID eventId);
 }

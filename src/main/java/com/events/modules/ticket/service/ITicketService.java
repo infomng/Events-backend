@@ -3,6 +3,7 @@ package com.events.modules.ticket.service;
 import com.events.modules.ticket.dto.CheckInRequestDto;
 import com.events.modules.ticket.dto.CheckInResultDto;
 import com.events.modules.ticket.dto.CheckInStatsDto;
+import com.events.modules.ticket.dto.ParticipantDto;
 import com.events.modules.ticket.dto.TicketDto;
 import com.events.modules.ticket.dto.TicketLineDto;
 
@@ -35,6 +36,12 @@ public interface ITicketService {
 
     /** Statistiques d'entrée d'un événement (réservé aux mêmes personnes que le scan). */
     CheckInStatsDto getCheckInStats(UUID eventId);
+
+    /** Participants (billets émis) d'un événement. Réservé à l'organisateur et aux admins. */
+    List<ParticipantDto> getParticipants(UUID eventId);
+
+    /** Export CSV (UTF-8, séparateur ;) des participants. Réservé à l'organisateur et aux admins. */
+    String exportParticipantsCsv(UUID eventId);
 
     List<TicketDto> getTicketsForUser(UUID userId);
 }

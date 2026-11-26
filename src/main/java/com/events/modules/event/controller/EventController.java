@@ -30,11 +30,13 @@ public class EventController {
 
     private final IEventService eventService;
 
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @PostMapping
     public ResponseEntity<Result<UUID>> create(@Valid @RequestBody CreateEventCommandDto command) {
         return ResponseEntity.ok(Result.success(eventService.createEvent(command)));
     }
 
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @PostMapping(value = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Result<List<String>>> uploadImages(@PathVariable UUID id, @RequestParam MultipartFile[] files) throws IOException {
         return ResponseEntity.ok(Result.success(eventService.uploadEventImages(id, files)));
@@ -49,11 +51,20 @@ public class EventController {
         return ResponseEntity.ok(Result.success(results));
     }
 
+    @GetMapping("/mine")
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
+    public ResponseEntity<Result<PageResponseDto<GetEventDto>>> getMyEvents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(Result.success(eventService.getMyEvents(page, size)));
+    }
+
     @GetMapping("/{id}")
     public GetEventDto getById(@PathVariable UUID id) {
         return eventService.getEventById(id);
     }
 
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<Result<Void>> updateEvent(@PathVariable UUID id,@Valid @RequestBody UpdateEventCommandDto command) {
         eventService.updateEvent(id, command);
@@ -84,18 +95,21 @@ public class EventController {
         return eventService.getAllIncomingEvents();
     }
 
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @DeleteMapping("/{eventId}")
     public ResponseEntity<Result<Void>> softDeleteEvent(@PathVariable UUID eventId) {
         eventService.softDeleteEvent(eventId);
         return ResponseEntity.ok(Result.success());
     }
 
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<Result<Void>> cancelEvent(@PathVariable UUID id) {
         eventService.cancelEvent(id);
         return ResponseEntity.ok(Result.success());
     }
 
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @PatchMapping("/{id}/publish")
     public ResponseEntity<Result<Void>> publishEvent(@PathVariable UUID id) {
         eventService.publishEvent(id);
@@ -107,24 +121,28 @@ public class EventController {
         return ResponseEntity.ok(Result.success(eventService.getDefaultPriceCategories()));
     }
 
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @PostMapping("/{id}/seats/generate")
     public ResponseEntity<Result<Void>> generateSeats(@PathVariable UUID id, @RequestParam List<GenerateSeatDto> generateSeatDto) {
         eventService.generateSeatsForEvent(id, generateSeatDto);
         return ResponseEntity.ok(Result.success());
     }
 
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @PostMapping("/{id}/staff")
     public ResponseEntity<Result<Void>> addStaff(@PathVariable UUID id, @Valid @RequestBody AddEventStaffDto dto) {
         eventService.addStaff(id, dto);
         return ResponseEntity.ok(Result.success());
     }
 
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @DeleteMapping("/{id}/staff/{userId}")
     public ResponseEntity<Result<Void>> removeStaff(@PathVariable UUID id, @PathVariable UUID userId) {
         eventService.removeStaff(id, userId);
         return ResponseEntity.ok(Result.success());
     }
 
+    @PreAuthorize("hasAnyRole('ORGANIZER', 'ADMIN')")
     @GetMapping("/{id}/staff")
     public ResponseEntity<Result<List<GetUserDto>>> getStaff(@PathVariable UUID id) {
         return ResponseEntity.ok(Result.success(eventService.getStaff(id)));

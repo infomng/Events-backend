@@ -1,0 +1,21 @@
+meta {
+  name: ChangeUserRole
+  type: http
+  seq: 1
+}
+
+patch {
+  url: {{host}}/users/{{userId}}/role
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "role": "ORGANIZER"
+  }
+}
+
+vars:pre-request {
+  userId:
+}

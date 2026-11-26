@@ -23,6 +23,9 @@ public interface ITicketRepository extends JpaRepository<Ticket, UUID> {
 
     Optional<Ticket> findByTicketCode(String ticketCode);
 
+    @Query("SELECT t FROM Ticket t JOIN FETCH t.user WHERE t.eventId = :eventId ORDER BY t.createdAt")
+    List<Ticket> findByEventIdWithHolder(@Param("eventId") UUID eventId);
+
     long countByEventIdAndStatus(UUID eventId, TicketStatusEnum status);
 
     /**

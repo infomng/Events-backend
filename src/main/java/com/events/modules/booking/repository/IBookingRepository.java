@@ -1,5 +1,6 @@
 package com.events.modules.booking.repository;
 
+import com.events.modules.booking.dto.SalesRowDto;
 import com.events.modules.booking.entity.Booking;
 import com.events.modules.event.enumeration.BookingStatusEnum;
 import jakarta.persistence.LockModeType;
@@ -27,6 +28,16 @@ public interface IBookingRepository extends JpaRepository<Booking, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT b FROM Booking b WHERE b.id = :id")
     Optional<Booking> findForUpdateById(@Param("id") UUID id);
+
+    @Query("SELECT new com.events.modules.booking.dto.SalesRowDto(i.priceCategoryId, b.status, SUM(i.quantity), SUM(i.totalPrice)) " +
+            "FROM BookingItem i JOIN i.booking b WHERE b.eventId = :eventId GROUP BY i.priceCategoryId, b.status")
+    List<SalesRowDto> aggregateSalesByEvent(@Param("eventId") UUID eventId);
+
+    long countByEventIdAndStatus(UUID eventId, BookingStatusEnum status);
+
+    @Query("SELECT b.id FROM Booking b WHERE b.eventId = :eventId AND b.status IN :statuses")
+    List<UUID> findIdsByEventIdAndStatusIn(@Param("eventId") UUID eventId,
+                                           @Param("statuses") List<BookingStatusEnum> statuses);
 
     @Query("SELECT b.id FROM Booking b WHERE b.status = :status AND b.expiresAt < :now")
     List<UUID> findIdsByStatusAndExpiresAtBefore(@Param("status") BookingStatusEnum status,

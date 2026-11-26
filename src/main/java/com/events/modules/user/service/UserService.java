@@ -2,7 +2,10 @@ package com.events.modules.user.service;
 
 import com.events.modules.auth.dto.RegisterCommandDto;
 import com.events.modules.auth.exception.UserNotFoundException;
+import com.events.modules.user.dto.GetUserDto;
+import com.events.modules.user.dto.mapper.IUserMapper;
 import com.events.modules.user.entity.User;
+import com.events.modules.user.enumeration.RoleEnum;
 import com.events.modules.user.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +24,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserService implements IUserService {
     private final IUserRepository userRepository;
+    private final IUserMapper userMapper;
 
     @Override
     @CacheEvict(value = "user", key = "'existsByEmail:' + #command.email()")
@@ -59,5 +63,15 @@ public class UserService implements IUserService {
     public User findById(UUID userId) {
         return userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
     }
-}
 
+    @Override
+    // Le rôle est mis en cache avec l'utilisateur (par id et par email) : on vide le cache "user"
+    @CacheEvict(value = "user", allEntries = true)
+    public GetUserDto changeRole(UUID userId, RoleEnum role) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("User not found"));
+        user.setRole(role);
+        userRepository.save(user);
+        log.info("Role of user {} changed to {}", userId, role);
+        return userMapper.toGetUserDto(user);
+    }
+}

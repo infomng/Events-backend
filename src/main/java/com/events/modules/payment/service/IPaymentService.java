@@ -77,4 +77,12 @@ public interface IPaymentService {
      * @return payment status
      */
     PaymentStatusEnum checkPaymentStatus(String paymentReference);
+
+    /**
+     * Rembourse le paiement d'une réservation dont l'événement a été annulé, puis annule la réservation
+     * et ses billets. Une réservation gratuite est simplement annulée.
+     * @return true si l'acheteur a été remboursé (ou n'avait rien payé), false si le remboursement
+     * a échoué et doit être traité manuellement
+     */
+    boolean refundBookingForCancelledEvent(UUID bookingId);
 }

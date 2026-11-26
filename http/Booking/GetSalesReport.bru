@@ -1,0 +1,15 @@
+meta {
+  name: GetSalesReport
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{host}}/bookings/sales/{{eventId}}
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  eventId:
+}
