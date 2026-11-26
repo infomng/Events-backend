@@ -9,6 +9,7 @@ import com.events.modules.auth.exception.TooManyRequestException;
 import com.events.modules.auth.exception.UnauthorizedException;
 import com.events.modules.auth.exception.UserNotFoundException;
 import com.events.modules.auth.exception.UserNotVerifiedException;
+import com.events.modules.booking.exception.BookingNotFoundException;
 import com.events.modules.cart.exception.CartItemNotFoundException;
 import com.events.modules.cart.exception.CartNotFoundException;
 import com.events.modules.cart.exception.NotEnoughQuantityException;
@@ -21,6 +22,7 @@ import com.events.modules.country.exception.CountryNotFoundException;
 import com.events.modules.event.exception.EventNotFoundException;
 import com.events.modules.event.exception.MaximumNumberOfImageException;
 import com.events.modules.event.exception.PriceCategoryNotFoundException;
+import com.events.modules.event.exception.TicketsSoldOutException;
 import com.events.modules.favorite.exception.FavoriteAlreadyExistsException;
 import com.events.modules.favorite.exception.FavoriteMaximumSizeReachedException;
 import com.events.modules.favorite.exception.FavoriteNotFoundException;
@@ -119,6 +121,7 @@ public class GlobalExceptionHandler {
             CartItemNotFoundException.class,
             PaymentNotFoundException.class,
             PriceCategoryNotFoundException.class,
+            BookingNotFoundException.class,
             UserNotFoundException.class,
             ResourceNotFoundException.class})
     public ResponseEntity<EmptyResult> handleNotFound(RuntimeException ex) {
@@ -134,6 +137,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({CategoryInUseException.class, CountryInUseException.class, CountryAlreadyExistsException.class,
             FavoriteAlreadyExistsException.class, FavoriteMaximumSizeReachedException.class,
             NotEnoughQuantityException.class, TooMuchQuantityException.class, MaximumNumberOfImageException.class,
+            TicketsSoldOutException.class,
             EmailAlreadyExistException.class,
             PaymentAlreadyProcessedException.class, InvalidPaymentStatusException.class, PaymentFailedException.class})
     public ResponseEntity<EmptyResult> handleInUse(RuntimeException ex) {

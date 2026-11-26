@@ -2,7 +2,9 @@ package com.events.modules.cart.service;
 
 import com.events.modules.cart.dto.AddItemToCartDto;
 import com.events.modules.cart.dto.GetCartDto;
+import com.events.modules.cart.dto.GetCartItemDto;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface ICartService {
@@ -37,4 +39,13 @@ public interface ICartService {
      * @return number of items in cart
      */
     Integer getCartItemsCount();
+
+    /**
+     * Retire du panier de l'utilisateur les articles d'un événement et les retourne
+     * (utilisé au moment de passer commande).
+     * @param userId the cart owner
+     * @param eventId the event being checked out
+     * @return the removed items (never empty)
+     */
+    List<GetCartItemDto> takeItemsForEvent(UUID userId, UUID eventId);
 }

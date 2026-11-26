@@ -16,9 +16,7 @@ auth:bearer {
 
 body:json {
   {
-    "paymentReference": "{{paymentReference}}",
-    "transactionId": "TXN-{{$randomUUID}}",
-    "gatewayResponse": "{\"status\": \"success\", \"gateway\": \"stripe\"}"
+    "paymentReference": "{{paymentReference}}"
   }
 }
 

@@ -1,0 +1,21 @@
+meta {
+  name: Checkout
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{host}}/bookings/checkout
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "eventId": "{{eventId}}"
+  }
+}
+
+vars:pre-request {
+  eventId:
+}

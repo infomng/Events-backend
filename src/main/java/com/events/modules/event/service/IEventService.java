@@ -37,6 +37,17 @@ public interface IEventService {
     List<String> getDefaultPriceCategories();
 
     void saveAll(List<CreateEventCommandDto> events);
+
+    /**
+     * Bloque des billets d'une catégorie de prix, de façon atomique.
+     * @throws com.events.modules.event.exception.TicketsSoldOutException s'il ne reste pas assez de places
+     */
+    void reserveTickets(UUID eventId, UUID priceCategoryId, int quantity);
+
+    /**
+     * Libère des billets précédemment bloqués (réservation expirée, annulée ou remboursée).
+     */
+    void releaseTickets(UUID eventId, UUID priceCategoryId, int quantity);
 }
 
 //TODO:void deleteEvent(Long id);

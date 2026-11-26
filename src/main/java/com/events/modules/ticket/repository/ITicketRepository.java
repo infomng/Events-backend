@@ -10,4 +10,8 @@ import java.util.UUID;
 @Repository
 public interface ITicketRepository extends JpaRepository<Ticket, UUID> {
     List<Ticket> findByUserId(UUID userId);
+
+    List<Ticket> findByBookingId(UUID bookingId);
+
+    boolean existsByBookingId(UUID bookingId);
 }

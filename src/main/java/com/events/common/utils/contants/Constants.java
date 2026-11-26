@@ -79,6 +79,19 @@ package com.events.common.utils.contants;
                     </div>
                 """;
 
+        public static final String BOOKING_CONFIRMATION_SUBJECT = "Your tickets - booking %s";
+        public static final String BOOKING_CONFIRMATION_EMAIL_CONTENT = """
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border-radius: 8px; background-color: #f9f9f9;">
+                        <h2 style="color: #333;">Thank you %s!</h2>
+                        <p style="font-size: 16px; color: #555;">Your booking for <strong>%s</strong> is confirmed.</p>
+                        <p style="font-size: 16px; color: #555;">Booking reference: <strong>%s</strong></p>
+                        <p style="font-size: 16px; color: #555;">%d ticket(s), one QR code attached per ticket:</p>
+                        <ul>%s</ul>
+                        <a href="%s" style="display: inline-block; margin: 20px 0; padding: 10px 20px; font-size: 16px; color: #fff; background-color: #007bff; text-decoration: none; border-radius: 5px;">View my tickets</a>
+                        <p style="font-size: 12px; color: #aaa;">Show the QR code at the entrance. This is an automated message. Please do not reply.</p>
+                    </div>
+                """;
+
         // Misc / Tests
         public static final String EMPTY_STRING = " ";
         public static final String JOHN_DOE = "John Doe";
