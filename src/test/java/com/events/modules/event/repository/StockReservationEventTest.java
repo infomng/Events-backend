@@ -42,7 +42,7 @@ class StockReservationEventTest {
                 .status(EventStatusEnum.PUBLISHED)
                 .build();
         PriceCategory regular = PriceCategory.builder()
-                .name("REGULAR-" + UUID.randomUUID()).price(new BigDecimal("20.00"))
+                .name("REGULAR").price(new BigDecimal("20.00"))
                 .totalTickets(5).availableTickets(5).soldTickets(0)
                 .event(event)
                 .build();
@@ -75,6 +75,26 @@ class StockReservationEventTest {
 
         assertThat(entityManager.find(PriceCategory.class, priceCategoryId).getAvailableTickets()).isEqualTo(5);
         assertThat(entityManager.find(Event.class, eventId).getAvailableTickets()).isEqualTo(5);
+    }
+
+    @Test
+    void twoEventsCanUseTheSamePriceCategoryName() {
+        LocalDateTime start = LocalDateTime.now().plusDays(20);
+        Event other = Event.builder()
+                .name("Other").description("Live").location("Lyon")
+                .isPublic(true).isFeatured(false).hasInvitationCode(false).hasSeats(false)
+                .startDate(start).endDate(start.plusHours(2))
+                .ticketSalesStartDate(LocalDateTime.now())
+                .status(EventStatusEnum.PUBLISHED)
+                .build();
+        other.getPriceCategories().add(PriceCategory.builder()
+                .name("REGULAR").price(BigDecimal.TEN).totalTickets(1).availableTickets(1).soldTickets(0)
+                .event(other).build());
+
+        entityManager.persist(other);
+        entityManager.flush();
+
+        assertThat(other.getId()).isNotNull();
     }
 
     @Test
