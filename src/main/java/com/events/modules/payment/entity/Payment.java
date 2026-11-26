@@ -84,7 +84,22 @@ public class Payment extends AuditableEntity {
         this.failureReason = reason;
     }
 
-    public void markAsRefunded() {
+    public void markAsRefunded(String reason) {
         this.status = PaymentStatusEnum.REFUNDED;
+        this.failureReason = reason;
+    }
+
+    public void markAsProcessing() {
+        this.status = PaymentStatusEnum.PROCESSING;
+    }
+
+    public void markAsCancelled(String reason) {
+        this.status = PaymentStatusEnum.CANCELLED;
+        this.failureReason = reason;
+    }
+
+    /** Un paiement terminé (payé, échoué, annulé, remboursé) ne doit plus changer d'état via la passerelle. */
+    public boolean isFinal() {
+        return status != PaymentStatusEnum.PENDING && status != PaymentStatusEnum.PROCESSING;
     }
 }

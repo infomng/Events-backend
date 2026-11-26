@@ -17,10 +17,18 @@ public interface IPaymentService {
     PaymentResponseDto initiatePayment(InitiatePaymentDto dto);
 
     /**
-     * Confirm a payment (webhook or manual confirmation)
+     * Synchronise a payment with the gateway (status is always read from Stripe)
      * @param dto confirmation data
+     * @return the payment status after synchronisation
      */
-    void confirmPayment(ConfirmPaymentDto dto);
+    PaymentStatusEnum confirmPayment(ConfirmPaymentDto dto);
+
+    /**
+     * Handle a signed Stripe webhook (source of truth for payment status)
+     * @param payload raw request body
+     * @param signatureHeader value of the Stripe-Signature header
+     */
+    void handleStripeWebhook(String payload, String signatureHeader);
 
     /**
      * Get payment by ID

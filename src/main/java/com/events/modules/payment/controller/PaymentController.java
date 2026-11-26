@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,11 +35,20 @@ public class PaymentController {
     }
 
     @PostMapping("/confirm")
-    @Operation(summary = "Confirm a payment (webhook or manual)")
-    public ResponseEntity<Result<Void>> confirmPayment(
+    @Operation(summary = "Synchronise a payment with Stripe and return its status")
+    public ResponseEntity<Result<PaymentStatusEnum>> confirmPayment(
             @Valid @RequestBody ConfirmPaymentDto dto) {
-        paymentService.confirmPayment(dto);
-        return ResponseEntity.ok(Result.success());
+        PaymentStatusEnum status = paymentService.confirmPayment(dto);
+        return ResponseEntity.ok(Result.success(status));
+    }
+
+    @PostMapping("/webhook/stripe")
+    @Operation(summary = "Stripe webhook (signature verified, public endpoint)")
+    public ResponseEntity<Void> handleStripeWebhook(
+            @RequestBody String payload,
+            @RequestHeader("Stripe-Signature") String signatureHeader) {
+        paymentService.handleStripeWebhook(payload, signatureHeader);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{paymentId}")
@@ -83,7 +93,8 @@ public class PaymentController {
     }
 
     @PostMapping("/refund")
-    @Operation(summary = "Refund a completed payment")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Refund a completed payment (admin only)")
     public ResponseEntity<Result<Void>> refundPayment(
             @Valid @RequestBody RefundPaymentDto dto) {
         paymentService.refundPayment(dto);

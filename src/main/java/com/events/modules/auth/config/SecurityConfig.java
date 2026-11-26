@@ -70,6 +70,8 @@ public class SecurityConfig {
             "/webjars/**",
             "/swagger-ui.html",
             "/oauth2/**", "/login/oauth2/**",
+            // Webhook Stripe : public, mais chaque requête est authentifiée par sa signature
+            "/api/v1/payments/webhook/stripe",
             "/error"
     };
 

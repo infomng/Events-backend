@@ -1,5 +1,9 @@
 package com.events.modules.payment.repository;
 
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
+import java.util.Collection;
+
 import com.events.modules.payment.entity.Payment;
 import com.events.modules.payment.enumeration.PaymentStatusEnum;
 import org.springframework.data.domain.Page;
@@ -32,4 +36,19 @@ public interface IPaymentRepository extends JpaRepository<Payment, UUID> {
     Optional<Payment> findByUserIdAndPaymentId(@Param("userId") UUID userId, @Param("paymentId") UUID paymentId);
 
     boolean existsByBookingId(UUID bookingId);
+
+    boolean existsByBookingIdAndStatusIn(UUID bookingId, Collection<PaymentStatusEnum> statuses);
+
+    /** Verrou pessimiste : évite qu'une confirmation client et un webhook traitent le même paiement en parallèle. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Payment p WHERE p.paymentReference = :paymentReference")
+    Optional<Payment> findForUpdateByPaymentReference(@Param("paymentReference") String paymentReference);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Payment p WHERE p.stripePaymentIntentId = :intentId")
+    Optional<Payment> findForUpdateByStripePaymentIntentId(@Param("intentId") String intentId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Payment p WHERE p.id = :paymentId")
+    Optional<Payment> findForUpdateById(@Param("paymentId") UUID paymentId);
 }

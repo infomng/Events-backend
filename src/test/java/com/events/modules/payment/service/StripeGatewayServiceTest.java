@@ -2,8 +2,10 @@ package com.events.modules.payment.service;
 
 import com.events.common.config.StripeConfig;
 import com.stripe.Stripe;
+import com.stripe.exception.SignatureVerificationException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
+import com.stripe.net.RequestOptions;
 import com.stripe.param.PaymentIntentCreateParams;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,7 +53,7 @@ class StripeGatewayServiceTest {
             mockIntent.setAmount(amount);
             mockIntent.setCurrency(currency);
 
-            mockedPaymentIntent.when(() -> PaymentIntent.create(any(PaymentIntentCreateParams.class)))
+            mockedPaymentIntent.when(() -> PaymentIntent.create(any(PaymentIntentCreateParams.class), any(RequestOptions.class)))
                     .thenReturn(mockIntent);
 
             // When
@@ -64,7 +66,7 @@ class StripeGatewayServiceTest {
             assertEquals(amount, result.getAmount());
             assertEquals(currency, result.getCurrency());
 
-            mockedPaymentIntent.verify(() -> PaymentIntent.create(any(PaymentIntentCreateParams.class)), times(1));
+            mockedPaymentIntent.verify(() -> PaymentIntent.create(any(PaymentIntentCreateParams.class), any(RequestOptions.class)), times(1));
         }
     }
 
@@ -136,29 +138,42 @@ class StripeGatewayServiceTest {
 //    }
 
     @Test
-    void confirmPaymentIntent_shouldReturnConfirmedPaymentIntent() throws StripeException {
+    void cancelPaymentIntent_shouldReturnCanceledPaymentIntent() throws StripeException {
         try (MockedStatic<PaymentIntent> mockedPaymentIntent = mockStatic(PaymentIntent.class)) {
             // Given
-            String paymentIntentId = "pi_confirm_789";
+            String paymentIntentId = "pi_cancel_789";
             PaymentIntent mockRetrievedIntent = mock(PaymentIntent.class);
-            PaymentIntent mockConfirmedIntent = new PaymentIntent();
-            mockConfirmedIntent.setId(paymentIntentId);
-            mockConfirmedIntent.setStatus("succeeded");
+            PaymentIntent mockCanceledIntent = new PaymentIntent();
+            mockCanceledIntent.setId(paymentIntentId);
+            mockCanceledIntent.setStatus("canceled");
 
             mockedPaymentIntent.when(() -> PaymentIntent.retrieve(paymentIntentId))
                     .thenReturn(mockRetrievedIntent);
-            when(mockRetrievedIntent.confirm()).thenReturn(mockConfirmedIntent);
+            when(mockRetrievedIntent.cancel()).thenReturn(mockCanceledIntent);
 
             // When
-            PaymentIntent result = stripeGatewayService.confirmPaymentIntent(paymentIntentId);
+            PaymentIntent result = stripeGatewayService.cancelPaymentIntent(paymentIntentId);
 
             // Then
-            assertNotNull(result);
-            assertEquals(paymentIntentId, result.getId());
-            assertEquals("succeeded", result.getStatus());
-            mockedPaymentIntent.verify(() -> PaymentIntent.retrieve(paymentIntentId), times(1));
-            verify(mockRetrievedIntent, times(1)).confirm();
+            assertEquals("canceled", result.getStatus());
+            verify(mockRetrievedIntent, times(1)).cancel();
         }
+    }
+
+    @Test
+    void constructWebhookEvent_shouldRejectWhenSecretMissing() {
+        when(stripeConfig.getWebhookSecret()).thenReturn(null);
+
+        assertThrows(IllegalStateException.class,
+                () -> stripeGatewayService.constructWebhookEvent("{}", "t=1,v1=abc"));
+    }
+
+    @Test
+    void constructWebhookEvent_shouldRejectInvalidSignature() {
+        when(stripeConfig.getWebhookSecret()).thenReturn("whsec_test");
+
+        assertThrows(SignatureVerificationException.class,
+                () -> stripeGatewayService.constructWebhookEvent("{}", "t=1,v1=forged"));
     }
 
 //    @Test
