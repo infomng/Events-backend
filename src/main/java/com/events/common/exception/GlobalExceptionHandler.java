@@ -3,15 +3,26 @@ package com.events.common.exception;
 import com.events.common.result.EmptyResult;
 import com.events.common.result.Result;
 import com.events.common.utils.contants.Constants;
+import com.events.modules.auth.exception.EmailAlreadyExistException;
+import com.events.modules.auth.exception.ForbidenException;
+import com.events.modules.auth.exception.TooManyRequestException;
+import com.events.modules.auth.exception.UnauthorizedException;
+import com.events.modules.auth.exception.UserNotFoundException;
+import com.events.modules.auth.exception.UserNotVerifiedException;
 import com.events.modules.cart.exception.CartItemNotFoundException;
 import com.events.modules.cart.exception.CartNotFoundException;
 import com.events.modules.cart.exception.NotEnoughQuantityException;
+import com.events.modules.cart.exception.TooMuchQuantityException;
 import com.events.modules.category.exception.CategoryInUseException;
 import com.events.modules.category.exception.CategoryNotFoundException;
+import com.events.modules.country.exception.CountryAlreadyExistsException;
 import com.events.modules.country.exception.CountryInUseException;
 import com.events.modules.country.exception.CountryNotFoundException;
 import com.events.modules.event.exception.EventNotFoundException;
+import com.events.modules.event.exception.MaximumNumberOfImageException;
+import com.events.modules.event.exception.PriceCategoryNotFoundException;
 import com.events.modules.favorite.exception.FavoriteAlreadyExistsException;
+import com.events.modules.favorite.exception.FavoriteMaximumSizeReachedException;
 import com.events.modules.favorite.exception.FavoriteNotFoundException;
 import com.events.modules.payment.exception.InvalidPaymentStatusException;
 import com.events.modules.payment.exception.PaymentAlreadyProcessedException;
@@ -21,6 +32,8 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -35,7 +48,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
 
-    @ExceptionHandler({RuntimeException.class, BadRequestException.class})
+    @ExceptionHandler({BadRequestException.class, BusinessException.class})
     public ResponseEntity<Result<ProblemDetail>> handleRuntime(RuntimeException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         detail.setTitle(ex.getClass().getSimpleName());
@@ -48,7 +61,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(WebClientResponseException.class)
-    public ResponseEntity<EmptyResult> handleWebClientResponseException(org.springframework.web.reactive.function.client.WebClientResponseException ex) {
+    public ResponseEntity<EmptyResult> handleWebClientResponseException(WebClientResponseException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(ex.getStatusCode());
         detail.setTitle("Erreur WebClient");
         detail.setDetail(ex.getMessage() + Constants.EMPTY_STRING + ex.getResponseBodyAsString());
@@ -104,7 +117,10 @@ public class GlobalExceptionHandler {
             CountryNotFoundException.class,
             CartNotFoundException.class,
             CartItemNotFoundException.class,
-            PaymentNotFoundException.class})
+            PaymentNotFoundException.class,
+            PriceCategoryNotFoundException.class,
+            UserNotFoundException.class,
+            ResourceNotFoundException.class})
     public ResponseEntity<EmptyResult> handleNotFound(RuntimeException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
         detail.setTitle(ex.getClass().getSimpleName());
@@ -115,7 +131,11 @@ public class GlobalExceptionHandler {
                 .body(EmptyResult.failure(detail));
     }
 
-    @ExceptionHandler({CategoryInUseException.class, CountryInUseException.class, FavoriteAlreadyExistsException.class, NotEnoughQuantityException.class, PaymentAlreadyProcessedException.class, InvalidPaymentStatusException.class, PaymentFailedException.class})
+    @ExceptionHandler({CategoryInUseException.class, CountryInUseException.class, CountryAlreadyExistsException.class,
+            FavoriteAlreadyExistsException.class, FavoriteMaximumSizeReachedException.class,
+            NotEnoughQuantityException.class, TooMuchQuantityException.class, MaximumNumberOfImageException.class,
+            EmailAlreadyExistException.class,
+            PaymentAlreadyProcessedException.class, InvalidPaymentStatusException.class, PaymentFailedException.class})
     public ResponseEntity<EmptyResult> handleInUse(RuntimeException ex) {
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         detail.setTitle(ex.getClass().getSimpleName());
@@ -123,6 +143,32 @@ public class GlobalExceptionHandler {
         detail.setProperty(Constants.TIMESTAMP, Instant.now().toString());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(EmptyResult.failure(detail));
+    }
+
+    @ExceptionHandler({UnauthorizedException.class, AuthenticationException.class})
+    public ResponseEntity<EmptyResult> handleUnauthorized(RuntimeException ex) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex);
+    }
+
+    // AccessDeniedException : levée par @PreAuthorize, sans ce handler elle finirait en 500
+    @ExceptionHandler({ForbidenException.class, AccessDeniedException.class, UserNotVerifiedException.class})
+    public ResponseEntity<EmptyResult> handleForbidden(RuntimeException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, ex);
+    }
+
+    @ExceptionHandler(TooManyRequestException.class)
+    public ResponseEntity<EmptyResult> handleTooManyRequests(TooManyRequestException ex) {
+        return buildResponse(HttpStatus.TOO_MANY_REQUESTS, ex);
+    }
+
+    private static ResponseEntity<EmptyResult> buildResponse(HttpStatus status, RuntimeException ex) {
+        ProblemDetail detail = ProblemDetail.forStatus(status);
+        detail.setTitle(ex.getClass().getSimpleName());
+        detail.setDetail(ex.getMessage());
+        detail.setProperty(Constants.TIMESTAMP, Instant.now().toString());
+        return ResponseEntity
+                .status(status)
                 .body(EmptyResult.failure(detail));
     }
 
