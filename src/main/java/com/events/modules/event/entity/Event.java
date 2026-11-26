@@ -118,9 +118,20 @@ public class Event extends AuditableEntity {
     @PrePersist
     @PreUpdate
     private void compute() {
+        applyDefaults();
         computeAvailableTickets();
         computeTotalTickets();
         isTicketSalesActive();
+    }
+
+    /** Champs facultatifs dans la commande de création mais NOT NULL en base : valeurs par défaut. */
+    private void applyDefaults() {
+        if (isFeatured == null) isFeatured = false;
+        if (hasSeats == null) hasSeats = false;
+        if (isPublic == null) isPublic = true;
+        if (hasInvitationCode == null) hasInvitationCode = false;
+        // Sans date d'ouverture des ventes, la billetterie ouvre dès la création
+        if (ticketSalesStartDate == null) ticketSalesStartDate = LocalDateTime.now();
     }
 
     private void computeAvailableTickets() {

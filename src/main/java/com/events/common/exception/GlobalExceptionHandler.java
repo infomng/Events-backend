@@ -31,6 +31,7 @@ import com.events.modules.payment.exception.PaymentAlreadyProcessedException;
 import com.events.modules.payment.exception.PaymentFailedException;
 import com.events.modules.payment.exception.PaymentNotFoundException;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -47,6 +48,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
 
@@ -75,9 +77,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<EmptyResult> handleInternalServerError(Exception ex) {
+        // Le message d'une erreur inattendue peut contenir du SQL, des noms de tables ou des données :
+        // il est journalisé côté serveur, jamais renvoyé au client.
+        log.error("Unhandled exception", ex);
         ProblemDetail detail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
         detail.setTitle("Erreur interne du serveur");
-        detail.setDetail(ex.getMessage());
+        detail.setDetail("Une erreur inattendue est survenue. Réessayez plus tard.");
         detail.setProperty(Constants.TIMESTAMP, Instant.now().toString());
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
