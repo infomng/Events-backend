@@ -81,8 +81,15 @@ public class PaymentService implements IPaymentService {
         // Le montant vient de la réservation en base, jamais du client. Vérifie aussi la propriété.
         BookingPaymentDto booking = bookingService.getPayableBooking(dto.bookingId(), currentUser.getId());
 
-        if (paymentRepository.existsByBookingIdAndStatusIn(booking.id(), ACTIVE_STATUSES)) {
-            throw new PaymentAlreadyProcessedException();
+        // Paiement déjà lancé (onglet fermé, autre appareil) : on reprend la même session Stripe
+        // plutôt que d'en créer une seconde, qui permettrait de payer deux fois la même réservation.
+        List<Payment> activePayments = paymentRepository.findAllByBookingIdAndStatusIn(booking.id(), ACTIVE_STATUSES);
+        if (!activePayments.isEmpty()) {
+            return activePayments.stream()
+                    .filter(this::isResumable)
+                    .findFirst()
+                    .map(this::resumePayment)
+                    .orElseThrow(PaymentAlreadyProcessedException::new);
         }
 
         String currency = stripeGatewayService.getCurrency();
@@ -126,6 +133,25 @@ public class PaymentService implements IPaymentService {
             paymentRepository.save(payment);
             throw new PaymentFailedException(localizationService.getMessage("payment.stripe.failed"));
         }
+    }
+
+    /** Un paiement en attente dont la session Stripe existe peut être repris par l'acheteur. */
+    private boolean isResumable(Payment payment) {
+        return payment.getStatus() == PaymentStatusEnum.PENDING
+                && payment.getStripeClientSecret() != null
+                && payment.getStripePaymentIntentId() != null;
+    }
+
+    private PaymentResponseDto resumePayment(Payment payment) {
+        log.info("Payment resumed: {} for booking: {}", payment.getPaymentReference(), payment.getBookingId());
+        return new PaymentResponseDto(
+                payment.getId(),
+                payment.getPaymentReference(),
+                payment.getStatus(),
+                null,
+                payment.getStripeClientSecret(),
+                localizationService.getMessage("payment.stripe.initiated")
+        );
     }
 
     /**

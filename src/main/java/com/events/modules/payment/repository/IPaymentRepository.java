@@ -40,6 +40,8 @@ public interface IPaymentRepository extends JpaRepository<Payment, UUID> {
 
     boolean existsByBookingIdAndStatusIn(UUID bookingId, Collection<PaymentStatusEnum> statuses);
 
+    List<Payment> findAllByBookingIdAndStatusIn(UUID bookingId, Collection<PaymentStatusEnum> statuses);
+
     /** Verrou pessimiste : évite qu'une confirmation client et un webhook traitent le même paiement en parallèle. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Payment p WHERE p.paymentReference = :paymentReference")
