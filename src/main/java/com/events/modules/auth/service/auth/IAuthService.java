@@ -8,6 +8,8 @@ import com.events.modules.auth.dto.ResetPasswordRequestDto;
 import com.events.modules.user.dto.GetUserDto;
 import com.events.modules.user.entity.User;
 
+import java.util.Optional;
+
 public interface IAuthService {
     AccessTokenDto login(LoginRequestDto request);
 
@@ -22,5 +24,11 @@ public interface IAuthService {
     String resetPassword(ResetPasswordRequestDto request);
 
     User getCurrentUser();
+
+    /**
+     * Utilisateur connecté, ou vide pour un visiteur anonyme. Contrairement à {@link #getCurrentUser()},
+     * ne lève pas d'exception : utilisable dans une transaction sans la marquer en échec.
+     */
+    Optional<User> findCurrentUser();
     GetUserDto getCurrentUserDto();
 }

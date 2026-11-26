@@ -157,6 +157,8 @@ public class EventService implements IEventService {
     @Cacheable(value = "EVENT", key = "#id")
     public GetEventDto getEventById(UUID id) {
         return eventRepository.findById(id)
+                // Un brouillon n'est visible que de son organisateur et des admins (même erreur qu'un id inconnu)
+                .filter(event -> PUBLIC_STATUSES.contains(event.getStatus()) || currentUserCanSeeDrafts(event))
                 .map(eventMapper::toDto)
                 .orElseThrow(() -> new BadRequestException("Event not found"));
     }
@@ -427,6 +429,21 @@ public class EventService implements IEventService {
                 .anyMatch(pc -> pc.getSoldTickets() != null && pc.getSoldTickets() > 0);
     }
 
+    /** Statuts visibles de tous ; DRAFT et CREATED restent privés. */
+    private static final Set<EventStatusEnum> PUBLIC_STATUSES =
+            EnumSet.of(EventStatusEnum.PUBLISHED, EventStatusEnum.CANCELLED, EventStatusEnum.COMPLETED);
+
+
+    private boolean isCurrentUserAdmin() {
+        return authService.findCurrentUser().map(u -> u.getRole() == RoleEnum.ADMIN).orElse(false);
+    }
+
+    private boolean currentUserCanSeeDrafts(Event event) {
+        return authService.findCurrentUser()
+                .map(u -> u.getRole() == RoleEnum.ADMIN || isOrganizer(event, u))
+                .orElse(false);
+    }
+
     private static boolean isOrganizer(Event event, User user) {
         return event.getOrganizer() != null && event.getOrganizer().getId().equals(user.getId());
     }
@@ -451,6 +468,12 @@ public class EventService implements IEventService {
         log.debug("Searching events with criteria: {}", criteria);
 
         Specification<Event> spec = buildSpecification(criteria);
+        // Recherche publique : jamais de brouillons (l'organisateur voit les siens via /events/mine)
+        if (!isCurrentUserAdmin()) {
+            Specification<Event> publicOnly = (root, query, cb) -> root.get("status").in(PUBLIC_STATUSES);
+            // Sans aucun critère, buildSpecification renvoie null
+            spec = spec == null ? publicOnly : spec.and(publicOnly);
+        }
         Page<Event> events = eventRepository.findAll(spec, pageable);
 
         List<GetEventDto> eventDtoList = eventMapper.toDtoList(events.getContent());
