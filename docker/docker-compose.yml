@@ -1,10 +1,16 @@
-
+# Développement : base de données et cache
+#   docker compose -f docker/docker-compose.yml up -d events-db events-redis
+# API conteneurisée (configuration dans docker/api.env, voir docker/api.env.example) :
+#   docker compose -f docker/docker-compose.yml --profile api up -d --build
 services:
   events-db:
     image: postgres:16
     restart: unless-stopped
     container_name: postgres-16
     volumes:
+      # Attention : ce chemin n'est pas le dossier de données de Postgres (/var/lib/postgresql/data),
+      # donc le volume nommé ne contient pas la base. Le corriger fait repartir d'une base vide :
+      # à faire sciemment, après un pg_dump. Laissé tel quel pour ne pas perdre la base de dev existante.
       - postgres_data:/home/events/db/data
     ports:
       - "5432:5432"
@@ -12,6 +18,38 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=events
       - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d events"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - events-net
+
+  events-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    container_name: redis-7
+    ports:
+      - "6379:6379"
+    networks:
+      - events-net
+
+  events-api:
+    profiles: ["api"]
+    build:
+      context: ..
+    restart: unless-stopped
+    container_name: events-api
+    env_file:
+      - api.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      events-db:
+        condition: service_healthy
+      events-redis:
+        condition: service_started
     networks:
       - events-net
 
